@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#090b20"><title>Star Pointer · Hybrid Tracking</title>
+<style>
+:root{color-scheme:dark;--bg:#090b20;--panel:#171a36;--line:#34395f;--accent:#cdaaff;--ok:#80e0b5;--warn:#ffc979;--bad:#ff8498}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% 0%,#29234b,#090b20 65%);color:#f5f1ff;font:15px system-ui,-apple-system,sans-serif}
+main{max-width:980px;margin:auto;padding:18px 14px 38px}.head{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:14px}h1{font-size:21px;margin:0}.sub,.muted{color:#aaa7c7;font-size:12px;line-height:1.55}.tag{border:1px solid var(--line);border-radius:99px;padding:6px 10px;font-size:11px}
+.layout{display:grid;gap:12px}.panel{background:#171a36dd;border:1px solid var(--line);border-radius:16px;padding:14px}.preview{position:relative;background:#050611;border-radius:12px;overflow:hidden;aspect-ratio:4/3}.preview video{width:100%;height:100%;object-fit:cover}.cross{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:38px;height:38px;pointer-events:none}.cross:before,.cross:after{content:"";position:absolute;background:#fff;box-shadow:0 0 8px #cdaaff}.cross:before{width:2px;height:38px;left:18px}.cross:after{height:2px;width:38px;top:18px}.cross i{position:absolute;left:15px;top:15px;width:8px;height:8px;border:1px solid white;border-radius:50%}
+button,input{font:inherit;border-radius:10px;border:1px solid var(--line);padding:11px 12px;background:#0c1028;color:white}button{background:#805db9;border:0;font-weight:650}button.secondary{background:#292c4e;border:1px solid var(--line)}button:disabled{opacity:.4}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}.stat{background:#0c1028;border-radius:10px;padding:10px}.stat small{display:block;color:#aaa7c7;font-size:11px}.stat strong{font-size:18px;font-variant-numeric:tabular-nums}
+input{width:100%;margin:5px 0 10px}label{font-size:12px;color:#c7c2df}.statusdot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#888;margin-right:6px}.ok{background:var(--ok)}.bad{background:var(--bad)}
+.steps{padding-left:19px}.markergrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.markergrid img{width:100%;background:white;border-radius:8px;padding:4px}.markergrid a{color:#d5bdff;font-size:11px;text-align:center;display:block}
+.ref{width:100%;border-radius:10px}.foot{text-align:center;color:#8581a2;font-size:11px;margin:18px 0}
+@media(min-width:720px){.layout{grid-template-columns:1.2fr .8fr}.panel.full{grid-column:1/-1}}
+</style></head><body><main>
+<div class="head"><div><h1>✦ Star Pointer</h1><div class="sub">Hybrid Marker Tracking · QR fiducials + Homography</div></div><span class="tag">DEMO 02</span></div>
+<div class="layout">
+<section class="panel"><b>กล้องมือถือ</b><div class="preview" style="margin-top:10px"><video id="video" autoplay muted playsinline></video><div class="cross"><i></i></div></div>
+<div class="row"><button id="start">เปิดกล้องหลัง</button><button id="stop" class="secondary" disabled>หยุดกล้อง</button><button id="scan" class="secondary" disabled>เริ่ม Tracking</button></div>
+<div class="stats"><div class="stat"><small>X</small><strong id="x">—</strong></div><div class="stat"><small>Y</small><strong id="y">—</strong></div><div class="stat"><small>Marker</small><strong id="marker">—</strong></div></div>
+<p class="muted" id="trackStatus">โหลดตัวอ่าน QR…</p></section>
+<section class="panel"><b>เชื่อมต่อ TouchDesigner</b><p class="muted">เว็บส่งพิกัด normalized 0–1 ผ่าน WebSocket</p>
+<label>WebSocket URL</label><input id="wsurl" value="ws://192.168.1.10:9980" spellcheck="false">
+<div class="row"><button id="connect" class="secondary">เชื่อมต่อ</button><span class="muted" id="wsStatus"><i class="statusdot"></i>ยังไม่เชื่อมต่อ</span></div>
+<p class="muted">เปลี่ยน IP ให้เป็น IP ของคอมพิวเตอร์ที่รัน TouchDesigner และใช้พอร์ตเดียวกับ Server</p></section>
+<section class="panel full"><b>ชุด Marker สำหรับจอ TV</b><p class="muted">เปิด <b>display.html</b> บนอุปกรณ์ที่ต่อ TV เพื่อแสดงภาพดาวพร้อม Marker ทั้ง 4 มุม ห้ามปรับ crop/zoom และให้ภาพเต็มกรอบ</p>
+<div class="markergrid"><div><img src="marker_TL.png"><a href="marker_TL.png" download>ดาวน์โหลด TL</a></div><div><img src="marker_TR.png"><a href="marker_TR.png" download>ดาวน์โหลด TR</a></div><div><img src="marker_BL.png"><a href="marker_BL.png" download>ดาวน์โหลด BL</a></div><div><img src="marker_BR.png"><a href="marker_BR.png" download>ดาวน์โหลด BR</a></div></div>
+<p class="muted">Marker แต่ละตัวมีรหัสเฉพาะและระบุตำแหน่งมุมของจอ ใช้เพียง 1 Marker ก็ประมาณ homography ได้เมื่อทราบขนาดและตำแหน่งของ Marker บนภาพ</p></section>
+<section class="panel full"><b>ภาพอ้างอิง</b><img class="ref" src="reference.jpg" alt="Star artwork"></section>
+</div>
+<section class="panel" style="margin-top:12px"><b>ขั้นตอนใช้งาน</b><ol class="muted steps"><li>เปิด display.html บนจอ TV/คอมพิวเตอร์ที่ต่อ TV</li><li>เปิดเว็บนี้บน iPhone ผ่าน HTTPS แล้วอนุญาตกล้องหลัง</li><li>เล็งกล้องให้เห็น Marker มุมใดมุมหนึ่งของภาพดาว</li><li>กดเริ่ม Tracking แล้วเล็งจุดกึ่งกลางภาพกล้องไปยังจุดที่ต้องการบน artwork</li><li>ดูค่า X/Y และเชื่อม WebSocket เมื่อพร้อมทดสอบ TouchDesigner</li></ol>
+<p class="muted">ข้อจำกัด: ต้องเห็น QR Marker อย่างน้อย 1 ตัวอย่างชัดเจนในภาพกล้อง หากไม่เห็น Marker จะหยุดส่งพิกัดและแสดง Tracking Lost การคำนวณใช้สมมติฐานว่าภาพบน TV เป็นระนาบเดียว</p></section>
+<div class="foot">Prototype · jsQR + projective transform · X/Y normalized 0–1</div>
+</main><canvas id="canvas" hidden></canvas>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script>
+const $=id=>document.getElementById(id);let stream=null,active=false,ws=null,lastSend=0;
+const names={STAR_POINTER_TL_V1:"TL",STAR_POINTER_TR_V1:"TR",STAR_POINTER_BL_V1:"BL",STAR_POINTER_BR_V1:"BR"};
+// Marker geometry in normalized coordinates, matching display.html
+const mSize=.085, margin=.022;
+function targetFor(id){let x=id.endsWith("L")?margin:1-margin-mSize,y=id.startsWith("T")?margin:1-margin-mSize;return [[x,y],[x+mSize,y],[x+mSize,y+mSize],[x,y+mSize]]}
+$("start").onclick=async()=>{try{stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:"environment"},width:{ideal:1280},height:{ideal:720}}});$("video").srcObject=stream;await $("video").play();$("stop").disabled=false;$("scan").disabled=false;$("trackStatus").textContent="กล้องพร้อม · จัด Marker ให้อยู่ในภาพ";}catch(e){$("trackStatus").textContent="เปิดกล้องไม่ได้: "+e.message}};
+$("stop").onclick=()=>{active=false;if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;$("video").srcObject=null;$("stop").disabled=true;$("scan").disabled=true;$("trackStatus").textContent="หยุดกล้องแล้ว"};
+$("scan").onclick=()=>{active=!active;$("scan").textContent=active?"หยุด Tracking":"เริ่ม Tracking";if(active)tick()};
+function tick(){if(!active)return;requestAnimationFrame(tick);const v=$("video");if(v.readyState<2||!window.jsQR)return;const c=$("canvas"),max=900,s=Math.min(1,max/v.videoWidth);c.width=Math.round(v.videoWidth*s);c.height=Math.round(v.videoHeight*s);const ctx=c.getContext("2d",{willReadFrequently:true});ctx.drawImage(v,0,0,c.width,c.height);const data=ctx.getImageData(0,0,c.width,c.height);const code=jsQR(data.data,data.width,data.height,{inversionAttempts:"attemptBoth"});
+if(!code){lost();return}const id=names[code.data];if(!id){lost();return}
+const loc=code.location;const observed=[loc.topLeftCorner,loc.topRightCorner,loc.bottomRightCorner,loc.bottomLeftCorner];
+const target=targetFor(id);const H=homography(observed,target);if(!H){lost();return}
+const px=c.width/2,py=c.height/2,den=H[6]*px+H[7]*py+1;const x=(H[0]*px+H[1]*py+H[2])/den,y=(H[3]*px+H[4]*py+H[5])/den;
+if(!Number.isFinite(x)||!Number.isFinite(y)||x<0||x>1||y<0||y>1){lost();return}
+$("x").textContent=x.toFixed(3);$("y").textContent=y.toFixed(3);$("marker").textContent=id;$("trackStatus").textContent="● Tracking สำเร็จ · Marker "+id;send(x,y,true,id);
+}
+function lost(){$("trackStatus").textContent="Tracking Lost · หันกล้องให้เห็น Marker ชัดเจน";$("marker").textContent="—";send(0,0,false,null)}
+// Solve 8 unknowns of a planar homography from four point pairs by Gaussian elimination.
+function homography(src,dst){let A=[],b=[];for(let i=0;i<4;i++){let [x,y]=[src[i].x,src[i].y], [u,v]=dst[i];A.push([x,y,1,0,0,0,-u*x,-u*y]);b.push(u);A.push([0,0,0,x,y,1,-v*x,-v*y]);b.push(v)}
+for(let i=0;i<8;i++){let p=i;for(let r=i+1;r<8;r++)if(Math.abs(A[r][i])>Math.abs(A[p][i]))p=r;if(Math.abs(A[p][i])<1e-9)return null;[A[i],A[p]]=[A[p],A[i]];[b[i],b[p]]=[b[p],b[i]];let d=A[i][i];for(let j=i;j<8;j++)A[i][j]/=d;b[i]/=d;for(let r=0;r<8;r++)if(r!==i){let f=A[r][i];for(let j=i;j<8;j++)A[r][j]-=f*A[i][j];b[r]-=f*b[i]}}
+return [...b,1]}
+function send(x,y,tracking,marker){if(ws&&ws.readyState===1){let now=Date.now();if(now-lastSend>40){ws.send(JSON.stringify({type:"pointer",x,y,tracking,marker,timestamp:now}));lastSend=now}}}
+$("connect").onclick=()=>{try{if(ws)ws.close();ws=new WebSocket($("wsurl").value.trim());$("wsStatus").innerHTML='<i class="statusdot"></i>กำลังเชื่อมต่อ';ws.onopen=()=>$("wsStatus").innerHTML='<i class="statusdot ok"></i>เชื่อมต่อแล้ว';ws.onclose=()=>$("wsStatus").innerHTML='<i class="statusdot bad"></i>ตัดการเชื่อมต่อ';ws.onerror=()=>$("wsStatus").innerHTML='<i class="statusdot bad"></i>เชื่อมต่อผิดพลาด'}catch(e){$("wsStatus").textContent=e.message}};
+setTimeout(()=>{if(window.jsQR)$("trackStatus").textContent="ตัวอ่าน QR พร้อม · เปิดกล้องเพื่อเริ่ม";else $("trackStatus").textContent="โหลด jsQR ไม่สำเร็จ · ตรวจสอบอินเทอร์เน็ต"},1800);
+</script></body></html>
