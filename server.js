@@ -1,55 +1,231 @@
-// SkyTracker WebSocket -> OSC bridge
-// Install: npm install ws
-// Run: node server.js
-// TouchDesigner: OSC In CHOP/DAT listen on UDP port 8000
+
+const osc = require("osc");
 const WebSocket = require("ws");
-const dgram = require("dgram");
 
-const WS_PORT = Number(process.env.WS_PORT || 8080);
-const TD_HOST = process.env.TD_HOST || "127.0.0.1";
-const TD_PORT = Number(process.env.TD_PORT || 8000);
-const OSC_ADDRESS = process.env.OSC_ADDRESS || "/skytracker/xy";
-const udp = dgram.createSocket("udp4");
-const wss = new WebSocket.Server({ port: WS_PORT });
+const PORT = 8080;
+const MAX_PLAYERS = 10;
 
-function oscString(s) {
-  const b = Buffer.from(s + "\0", "utf8");
-  const pad = (4 - (b.length % 4)) % 4;
-  return Buffer.concat([b, Buffer.alloc(pad)]);
-}
-function oscXY(x, y) {
-  const address = oscString(OSC_ADDRESS);
-  const types = oscString(",ff");
-  const values = Buffer.alloc(8);
-  values.writeFloatBE(x, 0);
-  values.writeFloatBE(y, 4);
-  return Buffer.concat([address, types, values]);
-}
-function oscActive(active) {
-  const address = oscString("/skytracker/active");
-  const types = oscString(",i");
-  const value = Buffer.alloc(4);
-  value.writeInt32BE(active ? 1 : 0, 0);
-  return Buffer.concat([address, types, value]);
-}
+// ========================================
+// OSC -> TouchDesigner
+// ========================================
 
-wss.on("connection", ws => {
-  console.log("SkyTracker client connected");
-  ws.send(JSON.stringify({ type: "welcome", playerId: "skytracker" }));
-  ws.on("message", raw => {
-    try {
-      const msg = JSON.parse(raw.toString());
-      if (msg.type === "xy" && Number.isFinite(msg.x) && Number.isFinite(msg.y)) {
-        const x = Math.max(0, Math.min(1, msg.x));
-        const y = Math.max(0, Math.min(1, msg.y));
-        udp.send(oscXY(x, y), TD_PORT, TD_HOST);
-      } else if (msg.type === "active") {
-        udp.send(oscActive(!!msg.active), TD_PORT, TD_HOST);
-      }
-    } catch (e) {
-      console.error("Bad message:", e.message);
-    }
-  });
-  ws.on("close", () => console.log("SkyTracker client disconnected"));
+const udpPort = new osc.UDPPort({
+    localAddress: "0.0.0.0",
+    localPort: 9001,
+    remoteAddress: "127.0.0.1",
+    remotePort: 9000
 });
-console.log(`WebSocket listening on :${WS_PORT}; OSC -> ${TD_HOST}:${TD_PORT}`);
+
+let oscReady = false;
+
+udpPort.on("ready", () => {
+    oscReady = true;
+    console.log("OSC READY");
+    console.log("TouchDesigner: 127.0.0.1:9000");
+});
+
+udpPort.on("error", (err) => {
+    console.error("OSC ERROR:", err.message);
+});
+
+udpPort.open();
+
+function sendOSC(address, type, value) {
+    if (!oscReady) return;
+
+    udpPort.send({
+        address,
+        args: [{ type, value }]
+    });
+}
+
+// ========================================
+// PLAYER MANAGEMENT
+// ========================================
+
+const occupiedSlots = new Set();
+
+function allocatePlayer() {
+    for (let i = 1; i <= MAX_PLAYERS; i++) {
+        if (!occupiedSlots.has(i)) {
+            occupiedSlots.add(i);
+            return i;
+        }
+    }
+
+    return null;
+}
+
+function releasePlayer(ws) {
+    const id = ws.playerId;
+
+    if (!id) return;
+
+    sendOSC(`/player/${id}/active`, "i", 0);
+
+    occupiedSlots.delete(id);
+    ws.playerId = null;
+
+    console.log(`Player ${id} disconnected`);
+}
+
+// ========================================
+// WEBSOCKET SERVER
+// ========================================
+
+const wss = new WebSocket.Server({
+    port: PORT
+});
+
+wss.on("listening", () => {
+    console.log("==============================");
+    console.log(" NIGHT SKY MULTIPLAYER SERVER");
+    console.log("==============================");
+    console.log(`WebSocket port: ${PORT}`);
+    console.log(`Max players: ${MAX_PLAYERS}`);
+});
+
+wss.on("connection", (ws) => {
+    const playerId = allocatePlayer();
+
+    if (playerId === null) {
+        ws.send(JSON.stringify({
+            type: "error",
+            message: "ห้องเต็มแล้ว"
+        }));
+
+        ws.close(1013, "Server full");
+        return;
+    }
+
+    ws.playerId = playerId;
+    ws.isAlive = true;
+
+    console.log(`Player ${playerId} connected`);
+
+    // เริ่มต้น inactive จนกว่าจะเปิดกล้อง
+    sendOSC(`/player/${playerId}/active`, "i", 0);
+
+    ws.send(JSON.stringify({
+        type: "welcome",
+        playerId
+    }));
+
+    ws.on("pong", () => {
+        ws.isAlive = true;
+    });
+
+    // ========================================
+    // RECEIVE WEBSITE MESSAGES
+    // ========================================
+
+    ws.on("message", (message) => {
+        try {
+            const data = JSON.parse(message);
+
+            // CAMERA ACTIVE / INACTIVE
+            if (data.type === "active") {
+                const active = data.active ? 1 : 0;
+
+                sendOSC(
+                    `/player/${playerId}/active`,
+                    "i",
+                    active
+                );
+
+                console.log(
+                    `Player ${playerId} camera active: ${active}`
+                );
+
+                return;
+            }
+
+            // PLAYER X/Y
+            if (data.type === "xy") {
+                const x = Number(data.x);
+                const y = Number(data.y);
+
+                if (
+                    !Number.isFinite(x) ||
+                    !Number.isFinite(y)
+                ) {
+                    return;
+                }
+
+                const safeX = Math.max(0, Math.min(1, x));
+                const safeY = Math.max(0, Math.min(1, y));
+
+                sendOSC(
+                    `/player/${playerId}/x`,
+                    "f",
+                    safeX
+                );
+
+                sendOSC(
+                    `/player/${playerId}/y`,
+                    "f",
+                    safeY
+                );
+
+                return;
+            }
+
+            // RUN CONSTELLATION ANIMATION
+            if (data.type === "runAnimation") {
+                console.log(
+                    `Player ${playerId} triggered animation`
+                );
+
+                sendOSC("/animation/run", "i", 1);
+
+                // Reset pulse after 100ms
+                setTimeout(() => {
+                    sendOSC("/animation/run", "i", 0);
+                }, 100);
+
+                return;
+            }
+
+        } catch (error) {
+            console.error(
+                "Invalid message:",
+                error.message
+            );
+        }
+    });
+
+    // ========================================
+    // DISCONNECT
+    // ========================================
+
+    ws.on("close", () => {
+        releasePlayer(ws);
+    });
+
+    ws.on("error", (err) => {
+        console.error(
+            `Player ${playerId} WebSocket error:`,
+            err.message
+        );
+    });
+});
+
+// ========================================
+// CONNECTION WATCHDOG
+// ========================================
+
+const heartbeat = setInterval(() => {
+    wss.clients.forEach((ws) => {
+        if (ws.isAlive === false) {
+            ws.terminate();
+            return;
+        }
+
+        ws.isAlive = false;
+        ws.ping();
+    });
+}, 15000);
+
+wss.on("close", () => {
+    clearInterval(heartbeat);
+});

@@ -1,174 +1,1137 @@
-<!doctype html>
+
+<!DOCTYPE html>
 <html lang="th">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>SkyTracker</title>
-<style>
-:root{color-scheme:dark;--bg:#090e16;--panel:#111a26;--line:#26374a;--cyan:#28e4dc;--muted:#94a6b8;--green:#62e6a0;--orange:#ffbf5b}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#edf5fb;font:15px/1.45 system-ui,-apple-system,sans-serif}
-header{height:54px;padding:0 15px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
-.brand{font-weight:800;letter-spacing:.08em}.brand span{color:var(--cyan)}.tiny{font-size:11px;color:var(--muted)}
-main{width:min(920px,100%);margin:auto;padding:12px;display:grid;gap:10px}
-.camera{position:relative;background:#020509;border:1px solid var(--line);border-radius:12px;overflow:hidden;aspect-ratio:4/3;max-height:58vh;display:grid;place-items:center}
-video{display:none}canvas{width:100%;height:100%;object-fit:contain}
-.cross{position:absolute;left:50%;top:50%;width:22px;height:22px;transform:translate(-50%,-50%);border:2px solid var(--cyan);border-radius:50%;pointer-events:none}
-.cross:after{content:"";position:absolute;left:50%;top:50%;width:4px;height:4px;background:var(--cyan);border-radius:50%;transform:translate(-50%,-50%)}
-.hud{position:absolute;left:9px;top:9px;background:#030912d9;border:1px solid #304356;border-radius:8px;padding:7px 10px;font:12px/1.55 ui-monospace,monospace;pointer-events:none}
-.hud b{color:var(--cyan)}.hud .state{color:var(--orange);font-weight:800}
-.controls{display:flex;gap:8px}.controls button{flex:1}
-button,input{font:inherit;border-radius:8px;border:1px solid var(--line);padding:10px;background:#101c2a;color:#edf5fb}
-button{background:var(--cyan);color:#061316;border:0;font-weight:750;cursor:pointer}button.secondary{background:#1a2a3c;color:#edf5fb;border:1px solid var(--line)}
-button:disabled{opacity:.45;cursor:not-allowed}
-.status{font-size:12px;color:var(--muted);padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#0d1621}
-.good{color:var(--green)}.warn{color:var(--orange)}.bad{color:#ff7777}
-.data{display:flex;gap:8px}.datum{flex:1;border:1px solid var(--line);background:var(--panel);border-radius:9px;padding:8px 11px}
-.datum small{display:block;color:var(--muted);font-size:11px}.datum strong{font:700 22px ui-monospace,monospace;color:var(--cyan)}
-details{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:10px 12px}
-summary{cursor:pointer;font-size:13px;font-weight:650}
-.settings{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
-label{display:grid;gap:4px;color:var(--muted);font-size:12px}input{width:100%;min-width:0;padding:8px}
-.marker-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px}
-.marker-card{background:#09121d;border:1px solid var(--line);border-radius:8px;padding:8px;text-align:center}
-.marker-card svg{width:100%;max-width:100px;height:auto;background:#fff;padding:4px}.marker-card small{display:block;color:var(--muted)}
-.inline{display:flex;gap:8px;align-items:center;margin-top:8px}.inline button{white-space:nowrap}
-#wsState{font-size:12px;font-weight:700;color:var(--orange)}
-@media(min-width:760px){main{grid-template-columns:1.35fr .65fr;align-items:start}.camera{grid-row:span 4;max-height:72vh}.settings-panel{grid-column:2}.data{grid-column:2}.status{grid-column:2}.controls{grid-column:2}}
-</style>
-<script src="https://cdn.jsdelivr.net/npm/js-aruco2@2.0.0/src/cv.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/js-aruco2@2.0.0/src/aruco.js"></script>
-</head>
-<body>
-<header><div class="brand"><span>✳</span> SKYTRACKER</div><div class="tiny" id="libState">LOADING ENGINE</div></header>
-<main>
-  <div class="camera">
-    <video id="video" autoplay playsinline muted></video>
-    <canvas id="view"></canvas><div class="cross"></div>
-    <div class="hud">TRACK: <b id="trackState" class="state">WAIT</b><br>X: <b id="xVal">0.000</b><br>Y: <b id="yVal">0.000</b><br>MARKERS: <b id="markerCount">0</b></div>
-  </div>
-  <div class="controls">
-    <button id="cameraBtn" disabled>กำลังโหลด...</button>
-    <button id="printBtn" class="secondary">Marker</button>
-  </div>
-  <div class="data">
-    <div class="datum"><small>WEBSOCKET</small><strong id="wsState">OFFLINE</strong></div>
-    <div class="datum"><small>MARKER ID</small><strong id="ids" style="font-size:17px">—</strong></div>
-  </div>
-  <div id="status" class="status">กำลังเตรียมระบบ...</div>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Light The Star</title>
 
-  <details class="settings-panel">
-    <summary>ตั้งค่าจอ / Marker / WebSocket</summary>
-    <div class="settings">
-      <label>Screen width (mm)<input id="screenW" type="number" min="100" value="1600"></label>
-      <label>Screen height (mm)<input id="screenH" type="number" min="100" value="900"></label>
-      <label>Marker size (mm)<input id="markerSize" type="number" min="20" value="50"></label>
-      <label>WebSocket URL<input id="wsUrl" placeholder="ws://192.168.1.10:8080 หรือ wss://..."></label>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: #090d12;
+      color: #edf2f7;
+      font-family: Arial, sans-serif;
+    }
+
+    header {
+      padding: 20px;
+      border-bottom: 1px solid #26313d;
+    }
+
+    h1 {
+      font-size: 18px;
+      margin: 0;
+    }
+
+    main {
+      max-width: 600px;
+      margin: auto;
+      padding: 16px;
+    }
+
+    .camera-view {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 3 / 4;
+      background: #030609;
+      border: 1px solid #354352;
+      border-radius: 12px;
+      overflow: hidden;
+      touch-action: manipulation;
+      cursor: crosshair;
+    }
+
+    video { display: none; }
+
+    canvas#canvasOutput {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .crosshair {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      border: 2px solid #6000fb;
+      border-radius: 50%;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .crosshair::before {
+      content: "";
+      position: absolute;
+      width: 5px;
+      height: 5px;
+      background: #0bf4ec;
+      border-radius: 50%;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .coordinates {
+      position: absolute;
+      left: 12px;
+      bottom: 12px;
+      padding: 8px 10px;
+      background: rgba(0, 0, 0, 0.8);
+      color: #0bf4ec;
+      font-size: 13px;
+      font-family: monospace;
+      line-height: 1.8;
+      border: 1px solid #26313d;
+      border-radius: 6px;
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    .controls {
+      margin-top: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 8px;
+      background: #0bf4ec;
+      color: #10241a;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      background: #354352;
+      color: #888;
+      cursor: not-allowed;
+    }
+
+    button:active:not(:disabled) {
+      opacity: 0.8;
+    }
+
+    #status {
+      color: #9eacbd;
+      font-size: 13px;
+      margin-top: 12px;
+      line-height: 1.6;
+    }
+
+    .hint {
+      color: #9eacbd;
+      font-size: 12px;
+      line-height: 1.6;
+      margin-top: 10px;
+    }
+
+    /* SkyTracker compact interface refresh */
+    header{padding:13px 16px}
+    main{max-width:760px;padding:12px}
+    .camera-view{aspect-ratio:4/3;max-height:58vh;margin:0 auto}
+    .controls{margin-top:9px;gap:8px}
+    .controls button{padding:11px}
+    #status{margin-top:8px;font-size:12px}
+    .hint{font-size:11px;margin-top:6px}
+    .coordinates{left:8px;bottom:8px;padding:6px 8px;font-size:12px;line-height:1.55}
+    .connection-panel{margin-top:9px;padding:10px;border:1px solid #26313d;border-radius:9px;background:#101923}
+    .connection-panel label{display:block;color:#9eacbd;font-size:11px;margin-bottom:5px}
+    .connection-row{display:flex;gap:7px}
+    .connection-row input{flex:1;min-width:0;padding:9px;background:#080e15;border:1px solid #354352;border-radius:7px;color:#edf2f7;font-size:13px}
+    .connection-row button{width:auto;min-width:90px;padding:9px 12px;font-size:13px}
+    #playerInfo{margin-top:7px!important;text-align:left!important;font-size:12px!important}
+    @media(min-width:700px){main{max-width:920px}.camera-view{max-height:65vh}}
+
+  </style>
+
+  <script
+    async
+    src="https://docs.opencv.org/4.x/opencv.js"
+    onload="onOpenCvReady();">
+  </script>
+</head>
+
+<body>
+  <header>
+    <h1>✳ NIGHT SKY TRACKER</h1>
+  </header>
+
+  <main>
+    <div class="camera-view" id="cameraView">
+      <video id="camera" autoplay playsinline muted></video>
+      <canvas id="canvasOutput"></canvas>
+
+      <div class="crosshair"></div>
+
+      <div class="coordinates">
+        Target Selected:
+        <span id="detectedStatus" style="color: #ff4d4d;">NO</span>
+        <br>
+        X: <span id="coordX">0.00</span>
+        <br>
+        Y: <span id="coordY">0.00</span>
+      </div>
     </div>
-    <p class="tiny">พิกัด X/Y ของ Marker เป็นตำแหน่งศูนย์กลางเทียบมุมซ้ายบนของพื้นที่ภาพ TV (mm)</p>
-    <div class="marker-grid" id="markerList"></div>
-    <div class="inline"><button id="applyBtn" class="secondary">บันทึกตำแหน่ง</button><button id="reconnectBtn" class="secondary">เชื่อมต่อ WS</button></div>
-  </details>
-  <details id="printDetails">
-    <summary>แผ่น Marker สำหรับพิมพ์</summary>
-    <p class="tiny">พิมพ์ 100% / Actual size ห้าม Fit to page และตรวจขนาดด้านนอกให้ตรงกับค่าที่ตั้งไว้</p>
-    <div id="printSheet" class="marker-grid"></div>
-  </details>
-</main>
-<script>
-(()=>{
-const $=id=>document.getElementById(id), video=$("video"),view=$("view"),ctx=view.getContext("2d");
-const work=document.createElement("canvas"),wctx=work.getContext("2d",{willReadFrequently:true});
-let detector=null,stream=null,running=false,raf=0,socket=null,lastDetect=0,lastSend=0,lastGood=null;
-const config={screenW:1600,screenH:900,markerSize:50,markers:[
-{id:0,x:35,y:-28},{id:1,x:1565,y:-28},{id:2,x:-28,y:450},{id:3,x:1628,y:450}]};
-const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-function status(t,c=""){$("status").textContent=t;$("status").className="status "+c}
-function update(x,y,ok){$("xVal").textContent=x.toFixed(3);$("yVal").textContent=y.toFixed(3);$("trackState").textContent=ok?"TRACKING":"LOST";$("trackState").className=ok?"good":"bad"}
-function renderConfig(){
- $("markerList").innerHTML="";
- config.markers.forEach((m,i)=>{const d=document.createElement("div");d.className="marker-card";d.innerHTML=`<b>ID ${m.id}</b><div class="settings"><label>X mm<input data-i="${i}" data-k="x" type="number" value="${m.x}"></label><label>Y mm<input data-i="${i}" data-k="y" type="number" value="${m.y}"></label></div>`;$("markerList").appendChild(d)});
-}
-function readConfig(){
- config.screenW=+$("screenW").value;config.screenH=+$("screenH").value;config.markerSize=+$("markerSize").value;
- document.querySelectorAll("#markerList input").forEach(e=>config.markers[+e.dataset.i][e.dataset.k]=+e.value);
-}
-$("applyBtn").onclick=()=>{readConfig();status("อัปเดตตำแหน่ง Marker แล้ว","good")};
-function makeMarkers(){
- const out=$("printSheet");out.innerHTML="";
- if(!window.AR?.Dictionary){out.textContent="Marker engine ยังไม่พร้อม";return}
- const dict=new AR.Dictionary("ARUCO");
- config.markers.forEach(m=>{const d=document.createElement("div");d.className="marker-card";const h=document.createElement("div");h.innerHTML=dict.generateSVG(m.id);d.appendChild(h);const b=document.createElement("b");b.textContent="ARUCO ID "+m.id;d.appendChild(b);const s=document.createElement("small");s.textContent=config.markerSize+" mm";d.appendChild(s);out.appendChild(d)});
-}
-$("printBtn").onclick=()=>{readConfig();makeMarkers();$("printDetails").open=true;$("printDetails").scrollIntoView({behavior:"smooth",block:"nearest"})};
-function solve(A,b){
- const n=b.length;A=A.map((r,i)=>r.slice().concat(b[i]));
- for(let i=0;i<n;i++){let p=i;for(let r=i+1;r<n;r++)if(Math.abs(A[r][i])>Math.abs(A[p][i]))p=r;if(Math.abs(A[p][i])<1e-10)throw Error("Marker geometry invalid");[A[i],A[p]]=[A[p],A[i]];let d=A[i][i];for(let c=i;c<=n;c++)A[i][c]/=d;for(let r=0;r<n;r++)if(r!==i){let f=A[r][i];for(let c=i;c<=n;c++)A[r][c]-=f*A[i][c]}}
- return A.map(r=>r[n]);
-}
-function homography(pairs){
- if(pairs.length<4)throw Error("Need one complete marker");
- const A=Array.from({length:8},()=>Array(8).fill(0)),b=Array(8).fill(0);
- for(const {X,Y,u,v} of pairs){const rows=[[X,Y,1,0,0,0,-u*X,-u*Y,u],[0,0,0,X,Y,1,-v*X,-v*Y,v]];
- for(const r of rows)for(let i=0;i<8;i++){b[i]+=r[i]*r[8];for(let j=0;j<8;j++)A[i][j]+=r[i]*r[j]}}
- return [...solve(A,b),1];
-}
-function inverse(m){
- const [a,b,c,d,e,f,g,h,i]=m,A=e*i-f*h,B=c*h-b*i,C=b*f-c*e,D=f*g-d*i,E=a*i-c*g,F=c*d-a*f,G=d*h-e*g,H=b*g-a*h,I=a*e-b*d,det=a*A+b*D+c*G;
- if(Math.abs(det)<1e-12)throw Error("Homography singular");return [A,B,C,D,E,F,G,H,I].map(x=>x/det);
-}
-function project(H,x,y){const z=H[6]*x+H[7]*y+H[8];return{x:(H[0]*x+H[1]*y+H[2])/z,y:(H[3]*x+H[4]*y+H[5])/z}}
-function pairsFor(markers){
- const out=[],half=config.markerSize/2,known=new Map(config.markers.map(m=>[m.id,m]));
- for(const m of markers){const pos=known.get(m.id);if(!pos)continue;[[-half,-half],[half,-half],[half,half],[-half,half]].forEach((q,i)=>out.push({X:pos.x+q[0],Y:pos.y+q[1],u:m.corners[i].x,v:m.corners[i].y}))}
- return out;
-}
-function connect(){
- const url=$("wsUrl").value.trim();if(!url){$("wsState").textContent="NO URL";status("ใส่ WebSocket URL ในตั้งค่าก่อน","warn");return}
- if(socket)socket.close();
- try{socket=new WebSocket(url)}catch(e){$("wsState").textContent="ERROR";return}
- $("wsState").textContent="CONNECT…";
- socket.onopen=()=>{$("wsState").textContent="CONNECTED";status("WebSocket connected","good")};
- socket.onclose=()=>{$("wsState").textContent="CLOSED"};
- socket.onerror=()=>{$("wsState").textContent="ERROR";status("WebSocket connection error","bad")};
- socket.onmessage=e=>{try{const d=JSON.parse(e.data);if(d.type==="error")status(d.message||"Server error","bad")}catch(_){}};
-}
-function send(obj){if(socket&&socket.readyState===WebSocket.OPEN){socket.send(JSON.stringify(obj));return true}return false}
-$("reconnectBtn").onclick=connect;
-function sendXY(x,y){const t=performance.now();if(t-lastSend<50)return;lastSend=t;send({type:"xy",x:clamp(x,0,1),y:clamp(y,0,1)})}
-function frame(t){
- if(!running)return;raf=requestAnimationFrame(frame);
- if(video.readyState<2||t-lastDetect<66)return; // ~15 detection frames/sec
- lastDetect=t;
- const vw=video.videoWidth,vh=video.videoHeight,scale=Math.min(1,640/vw),ww=Math.max(1,Math.round(vw*scale)),wh=Math.max(1,Math.round(vh*scale));
- if(work.width!==ww||work.height!==wh){work.width=ww;work.height=wh;view.width=ww;view.height=wh}
- wctx.drawImage(video,0,0,ww,wh);ctx.drawImage(work,0,0);
- try{
-  const found=detector.detect(wctx.getImageData(0,0,ww,wh)).filter(m=>config.markers.some(k=>k.id===m.id));
-  $("markerCount").textContent=found.length;$("ids").textContent=found.length?found.map(m=>m.id).join(","):"—";
-  if(!found.length){update(lastGood?.x??0,lastGood?.y??0,false);status("ไม่พบ Marker ที่ลงทะเบียน — หยุดส่ง XY","bad");return}
-  const H=homography(pairsFor(found)),p=project(inverse(H),ww/2,wh/2),x=p.x/config.screenW,y=p.y/config.screenH;
-  if(!Number.isFinite(x)||!Number.isFinite(y))throw Error("Invalid XY");
-  lastGood={x:clamp(x,0,1),y:clamp(y,0,1)};update(lastGood.x,lastGood.y,true);sendXY(lastGood.x,lastGood.y);
-  const inside=x>=0&&x<=1&&y>=0&&y<=1;
-  status(`Tracking · ${found.length} marker${found.length>1?"s":""} · ${inside?"ON SCREEN":"OUTSIDE SCREEN"}`,inside?"good":"warn");
-  ctx.save();ctx.strokeStyle="#ffb547";ctx.lineWidth=2;
-  for(const m of found){ctx.beginPath();m.corners.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();ctx.stroke()}
-  ctx.restore();
- }catch(e){update(lastGood?.x??0,lastGood?.y??0,false);status(e.message||"Tracking error","bad")}
-}
-async function camera(){
- if(running){running=false;cancelAnimationFrame(raf);stream?.getTracks().forEach(t=>t.stop());stream=null;video.srcObject=null;send({type:"active",active:false});$("cameraBtn").textContent="เปิดกล้อง";status("กล้องหยุดแล้ว");return}
- try{if(!navigator.mediaDevices?.getUserMedia)throw Error("ต้องเปิดผ่าน HTTPS");stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:"environment"},width:{ideal:960},height:{ideal:540}}});video.srcObject=stream;await video.play();running=true;send({type:"active",active:true});$("cameraBtn").textContent="ปิดกล้อง";status("กล้องพร้อม — กำลังค้นหา Marker");raf=requestAnimationFrame(frame)}
- catch(e){status("เปิดกล้องไม่ได้: "+e.message,"bad")}
-}
-$("cameraBtn").onclick=camera;
-function init(){
- if(window.AR?.Detector&&window.AR?.Dictionary){detector=new AR.Detector({dictionaryName:"ARUCO"});$("libState").textContent="ENGINE READY";$("cameraBtn").disabled=false;$("cameraBtn").textContent="เปิดกล้อง";makeMarkers();status("พร้อมใช้งาน")}
- else{$("libState").textContent="ENGINE ERROR";status("โหลด Marker Engine ไม่สำเร็จ — ตรวจอินเทอร์เน็ตแล้วรีเฟรช","bad")}
-}
-renderConfig();window.addEventListener("load",init);if(document.readyState==="complete")init();
-window.addEventListener("pagehide",()=>{send({type:"active",active:false});stream?.getTracks().forEach(t=>t.stop());socket?.close()});
-})();
-</script>
+
+    <div class="controls">
+      <button id="startCamera" disabled>
+        กำลังโหลด OpenCV.js...
+      </button>
+      <div id="playerInfo" style="color:#0bf4ec;font-size:13px;text-align:center;">Player: กำลังเชื่อมต่อ...</div>
+      <div class="connection-panel">
+        <label for="wsEndpoint">WEBSOCKET URL จาก TryCloudflare</label>
+        <div class="connection-row">
+          <input id="wsEndpoint" type="url" inputmode="url" placeholder="wss://xxxx.trycloudflare.com">
+          <button id="connectWs" type="button">เชื่อมต่อ</button>
+        </div>
+        <div class="hint">ใช้ URL HTTPS จาก TryCloudflare เปลี่ยนเป็น wss:// และใช้พอร์ต/เส้นทางตาม tunnel ที่ตั้งไว้</div>
+      </div>
+      <button id="runAnimation" style="display:none;background:#ffcf5a;color:#231900;">✨ รันอนิเมชันกลุ่มดาว</button>
+    </div>
+
+    <div id="status">สถานะ: รอโหลด OpenCV.js</div>
+
+    <div class="hint">
+      * กรอบสีส้มคือรูปทรงสี่เหลี่ยมที่ตรวจพบ<br>
+      * แตะภายในกรอบที่ต้องการเลือก กรอบจะเปลี่ยนเป็นสีเขียวอมฟ้า<br>
+      * X/Y คือพิกัดจุดเล็งกลางภาพภายในกรอบที่เลือก มีค่าระหว่าง 0.00–1.00
+    </div>
+  </main>
+
+  <script>
+    const camera = document.getElementById("camera");
+    const canvasOutput = document.getElementById("canvasOutput");
+    const cameraView = document.getElementById("cameraView");
+    const button = document.getElementById("startCamera");
+    const status = document.getElementById("status");
+    const coordX = document.getElementById("coordX");
+    const coordY = document.getElementById("coordY");
+    const detectedStatus = document.getElementById("detectedStatus");
+    const ctx = canvasOutput.getContext("2d");
+
+    let stream = null;
+    let isOpenCvReady = false;
+    let isProcessing = false;
+
+    let selectedPoint = null;
+    let selectedQuad = null;
+
+    // ล็อกเป้าหมายจนกว่าจะรีเฟรชเว็บ
+    let targetLocked = false;
+
+    let lostFrames = 0;
+    let previousQuadCenter = null;
+    let lastGoodXY = { x: 0, y: 0 };
+    let smoothedXY = null;
+
+    // รอค้นหากรอบเดิมต่อ ไม่ปลดล็อกเป้าหมายเอง
+    const MAX_LOST_FRAMES = 90;
+    const MIN_AREA_RATIO = 0.005;
+    const MAX_AREA_RATIO = 0.95;
+
+    // ปรับความสมูทของพิกัด X/Y
+    // ค่ายิ่งต่ำยิ่งนิ่ง แต่ตอบสนองช้าลง
+    const XY_SMOOTHING_ALPHA = 0.18;
+
+    // ตัดการเปลี่ยนแปลงเล็กมากที่เกิดจาก noise
+    const XY_DEADBAND = 0.0015;
+
+    // เตรียม OpenCV.js
+    function onOpenCvReady() {
+      if (typeof cv === "undefined") {
+        status.textContent =
+          "โหลด OpenCV.js ไม่สำเร็จ ลองรีเฟรชหน้าเว็บ";
+        return;
+      }
+
+      cv.onRuntimeInitialized = () => {
+        isOpenCvReady = true;
+        status.textContent =
+          "สถานะ: OpenCV.js พร้อมทำงาน กดเปิดกล้องได้เลย";
+        button.textContent = "เปิดกล้องส่องหา";
+        button.disabled = false;
+      };
+
+      if (cv.Mat) {
+        isOpenCvReady = true;
+        status.textContent =
+          "สถานะ: OpenCV.js พร้อมทำงาน กดเปิดกล้องได้เลย";
+        button.textContent = "เปิดกล้องส่องหา";
+        button.disabled = false;
+      }
+    }
+
+    function setTargetStatus(found) {
+      detectedStatus.textContent = found ? "YES" : "NO";
+      detectedStatus.style.color =
+        found ? "#0bf4ec" : "#ff4d4d";
+    }
+
+    function displayCoordinates(x, y, found) {
+      coordX.textContent = Number(x).toFixed(2);
+      coordY.textContent = Number(y).toFixed(2);
+      setTargetStatus(found);
+    }
+
+    // WebSocket → Node.js → OSC → TouchDesigner
+    // Cloudflare Tunnel hostname ต้อง forward ไปยัง server.js port 8080
+    const wsEndpointInput = document.getElementById("wsEndpoint");
+    const connectWsButton = document.getElementById("connectWs");
+    let WS_ENDPOINT = "";
+    const playerInfo = document.getElementById("playerInfo");
+    const runAnimationButton = document.getElementById("runAnimation");
+    let socket = null;
+    let playerId = null;
+    let lastXYSendTime = 0;
+    let constellationComplete = false;
+
+    function connectWebSocket() {
+      WS_ENDPOINT = wsEndpointInput.value.trim();
+      if (!WS_ENDPOINT) {
+        playerInfo.textContent = "Player: ใส่ URL จาก TryCloudflare ก่อน";
+        return;
+      }
+      if (socket && [WebSocket.OPEN, WebSocket.CONNECTING].includes(socket.readyState)) {
+        socket.close();
+      }
+      socket = new WebSocket(WS_ENDPOINT);
+      socket.addEventListener("open", () => {
+        playerInfo.textContent = "เชื่อมต่อแล้ว กำลังรับ Player ID...";
+      });
+      socket.addEventListener("message", (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === "welcome") {
+            playerId = data.playerId;
+            playerInfo.textContent = `Player ${playerId} / เชื่อมต่อแล้ว`;
+            if (stream) sendPlayerActive(true);
+          } else if (data.type === "error") {
+            playerInfo.textContent = data.message || "Server error";
+          }
+        } catch (e) { console.warn("WebSocket message parse error", e); }
+      });
+      socket.addEventListener("close", () => {
+        playerId = null;
+        playerInfo.textContent = "เชื่อมต่อหลุด กำลัง reconnect...";
+        if (wsEndpointInput.value.trim()) setTimeout(connectWebSocket, 1500);
+      });
+      socket.addEventListener("error", () => {
+        playerInfo.textContent = "WebSocket เชื่อมต่อไม่สำเร็จ";
+      });
+    }
+
+    function wsSend(data) {
+      if (socket?.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify(data));
+        return true;
+      }
+      return false;
+    }
+    function sendPlayerActive(active) {
+      wsSend({ type: "active", active: Boolean(active) });
+    }
+    function sendXYToTouchDesigner(x, y) {
+      const now = performance.now();
+      if (now - lastXYSendTime < 50) return;
+      lastXYSendTime = now;
+      wsSend({
+        type: "xy",
+        x: Math.max(0, Math.min(1, Number(x))),
+        y: Math.max(0, Math.min(1, Number(y)))
+      });
+    }
+
+    // เมื่อโค้ดตรวจดาวพบครบทุกดวง ให้เรียก markConstellationComplete()
+    function markConstellationComplete() {
+      constellationComplete = true;
+      runAnimationButton.style.display = "block";
+      runAnimationButton.disabled = false;
+      status.textContent = "กลุ่มดาวครบแล้ว! กดปุ่มเพื่อรันอนิเมชัน";
+    }
+    runAnimationButton.addEventListener("click", () => {
+      if (!constellationComplete) return;
+      if (!wsSend({ type: "runAnimation" })) {
+        status.textContent = "ยังไม่เชื่อมต่อเซิร์ฟเวอร์ จึงส่งคำสั่งไม่ได้";
+        return;
+      }
+      status.textContent = "ส่งคำสั่งรันอนิเมชันไป TouchDesigner แล้ว";
+    });
+
+    connectWsButton.addEventListener("click", connectWebSocket);
+    wsEndpointInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") connectWebSocket();
+    });
+
+    // แปลงตำแหน่งที่แตะบนจอเป็นพิกัดจริงของภาพกล้อง
+    function pointerToFrame(clientX, clientY) {
+      if (!canvasOutput.width || !canvasOutput.height) {
+        return null;
+      }
+
+      const rect = canvasOutput.getBoundingClientRect();
+
+      const scale = Math.min(
+        rect.width / canvasOutput.width,
+        rect.height / canvasOutput.height
+      );
+
+      const shownWidth = canvasOutput.width * scale;
+      const shownHeight = canvasOutput.height * scale;
+
+      const offsetX = (rect.width - shownWidth) / 2;
+      const offsetY = (rect.height - shownHeight) / 2;
+
+      const x = (clientX - rect.left - offsetX) / scale;
+      const y = (clientY - rect.top - offsetY) / scale;
+
+      if (
+        x < 0 || y < 0 ||
+        x > canvasOutput.width ||
+        y > canvasOutput.height
+      ) {
+        return null;
+      }
+
+      return { x, y };
+    }
+
+    cameraView.addEventListener("pointerdown", (event) => {
+      // เลือกเป้าหมายได้เพียงครั้งเดียวต่อการโหลดเว็บ
+      if (targetLocked) return;
+
+      const point = pointerToFrame(
+        event.clientX,
+        event.clientY
+      );
+
+      if (point) {
+        selectedPoint = point;
+        status.textContent =
+          "เลือกตำแหน่งแล้ว กำลังค้นหากรอบที่แตะ...";
+      }
+    });
+
+    // ตรวจว่าจุดที่แตะอยู่ภายในรูปสี่เหลี่ยมหรือไม่
+    function polygonContainsPoint(point, quad) {
+      let inside = false;
+
+      for (
+        let i = 0, j = quad.length - 1;
+        i < quad.length;
+        j = i++
+      ) {
+        const xi = quad[i].x;
+        const yi = quad[i].y;
+        const xj = quad[j].x;
+        const yj = quad[j].y;
+
+        const intersects =
+          ((yi > point.y) !== (yj > point.y)) &&
+          (
+            point.x <
+            (xj - xi) * (point.y - yi) /
+            ((yj - yi) || 1e-9) + xi
+          );
+
+        if (intersects) inside = !inside;
+      }
+
+      return inside;
+    }
+
+    function polygonArea(points) {
+      let area = 0;
+
+      for (let i = 0; i < points.length; i++) {
+        const a = points[i];
+        const b = points[(i + 1) % points.length];
+
+        area += a.x * b.y - b.x * a.y;
+      }
+
+      return Math.abs(area / 2);
+    }
+
+    function centerOf(points) {
+      return {
+        x: points.reduce((sum, p) => sum + p.x, 0) /
+          points.length,
+        y: points.reduce((sum, p) => sum + p.y, 0) /
+          points.length
+      };
+    }
+
+    // เรียงมุมของกรอบเพื่อให้ได้ TL, TR, BR, BL
+    function orderQuad(points) {
+      const center = centerOf(points);
+
+      const sorted = points.slice().sort((a, b) =>
+        Math.atan2(a.y - center.y, a.x - center.x) -
+        Math.atan2(b.y - center.y, b.x - center.x)
+      );
+
+      let start = 0;
+      let minSum = Infinity;
+
+      sorted.forEach((p, i) => {
+        const sum = p.x + p.y;
+
+        if (sum < minSum) {
+          minSum = sum;
+          start = i;
+        }
+      });
+
+      let ordered = sorted
+        .slice(start)
+        .concat(sorted.slice(0, start));
+
+      const cross =
+        (ordered[1].x - ordered[0].x) *
+        (ordered[2].y - ordered[1].y) -
+        (ordered[1].y - ordered[0].y) *
+        (ordered[2].x - ordered[1].x);
+
+      if (cross < 0) {
+        ordered = [
+          ordered[0],
+          ordered[3],
+          ordered[2],
+          ordered[1]
+        ];
+      }
+
+      if (ordered[1].x < ordered[3].x) {
+        ordered = [
+          ordered[0],
+          ordered[3],
+          ordered[2],
+          ordered[1]
+        ];
+      }
+
+      return ordered;
+    }
+
+    // ตรวจหารูปสี่เหลี่ยมจากภาพกล้อง
+    function extractCandidates(srcMat, width, height) {
+      const candidates = [];
+
+      let gray = new cv.Mat();
+      let blurred = new cv.Mat();
+      let edges = new cv.Mat();
+      let closed = new cv.Mat();
+      let contours = new cv.MatVector();
+      let hierarchy = new cv.Mat();
+      let kernel = null;
+
+      try {
+        cv.cvtColor(srcMat, gray, cv.COLOR_RGBA2GRAY);
+
+        cv.GaussianBlur(
+          gray,
+          blurred,
+          new cv.Size(7, 7),
+          0
+        );
+
+        // ลด threshold เพื่อช่วยตรวจจับขอบที่ไม่ชัด
+        cv.Canny(blurred, edges, 25, 110);
+
+        // เชื่อมช่องว่างเล็ก ๆ ของเส้นขอบให้มากขึ้น
+        kernel = cv.getStructuringElement(
+          cv.MORPH_RECT,
+          new cv.Size(7, 7)
+        );
+
+        cv.morphologyEx(
+          edges,
+          closed,
+          cv.MORPH_CLOSE,
+          kernel
+        );
+
+        cv.findContours(
+          closed,
+          contours,
+          hierarchy,
+          cv.RETR_LIST,
+          cv.CHAIN_APPROX_SIMPLE
+        );
+
+        const imageArea = width * height;
+
+        for (let i = 0; i < contours.size(); i++) {
+          const contour = contours.get(i);
+          const approx = new cv.Mat();
+
+          try {
+            const area = Math.abs(
+              cv.contourArea(contour)
+            );
+
+            const ratio = area / imageArea;
+
+            if (
+              ratio < MIN_AREA_RATIO ||
+              ratio > MAX_AREA_RATIO
+            ) {
+              continue;
+            }
+
+            const perimeter = cv.arcLength(contour, true);
+
+            cv.approxPolyDP(
+              contour,
+              approx,
+              0.03 * perimeter,
+              true
+            );
+
+            if (
+              approx.rows !== 4 ||
+              !cv.isContourConvex(approx)
+            ) {
+              continue;
+            }
+
+            const points = [];
+
+            for (let j = 0; j < 4; j++) {
+              const ptr = approx.intPtr(j, 0);
+
+              points.push({
+                x: ptr[0],
+                y: ptr[1]
+              });
+            }
+
+            const ordered = orderQuad(points);
+            const areaQuad = polygonArea(ordered);
+
+            if (areaQuad < 0.008 * imageArea) {
+              continue;
+            }
+
+            const xs = ordered.map(p => p.x);
+            const ys = ordered.map(p => p.y);
+
+            const boxW =
+              Math.max(...xs) - Math.min(...xs);
+
+            const boxH =
+              Math.max(...ys) - Math.min(...ys);
+
+            if (
+              boxW < width * 0.12 ||
+              boxH < height * 0.07
+            ) {
+              continue;
+            }
+
+            const ratioWH = boxW / Math.max(boxH, 1);
+
+            if (ratioWH < 0.75 || ratioWH > 5.5) {
+              continue;
+            }
+
+            const center = centerOf(ordered);
+
+            candidates.push({
+              points: ordered,
+              area: areaQuad,
+              center
+            });
+          } finally {
+            approx.delete();
+            contour.delete();
+          }
+        }
+      } finally {
+        gray.delete();
+        blurred.delete();
+        edges.delete();
+        closed.delete();
+        contours.delete();
+        hierarchy.delete();
+
+        if (kernel) kernel.delete();
+      }
+
+      return candidates;
+    }
+
+    // เลือกกรอบที่แตะหนึ่งครั้ง แล้วติดตามเฉพาะกรอบนั้นจนรีเฟรชเว็บ
+    function chooseCandidate(candidates) {
+      // ยังไม่ได้ล็อก: รอให้แตะภายในกรอบที่ตรวจพบ
+      if (!targetLocked) {
+        if (!selectedPoint || !candidates.length) return null;
+
+        const tapped = candidates
+          .filter(c => polygonContainsPoint(selectedPoint, c.points))
+          .sort((a, b) => b.area - a.area)[0];
+
+        if (!tapped) return null;
+
+        targetLocked = true;
+        selectedQuad = tapped.points.map(p => ({ ...p }));
+        previousQuadCenter = { ...tapped.center };
+        selectedPoint = null;
+        lostFrames = 0;
+
+        status.textContent =
+          "ล็อกกรอบที่เลือกแล้ว จะไม่เปลี่ยนกรอบจนกว่าจะรีเฟรชเว็บ";
+
+        return tapped;
+      }
+
+      // ล็อกแล้ว: ไม่เลือกกรอบอื่น แม้กรอบเดิมจะหายไปชั่วคราว
+      if (!selectedQuad || !previousQuadCenter || !candidates.length) {
+        return null;
+      }
+
+      const frameDiagonal = Math.hypot(
+        canvasOutput.width,
+        canvasOutput.height
+      );
+
+      const previousArea = Math.max(
+        polygonArea(selectedQuad),
+        1
+      );
+
+      // เลือกผู้สมัครที่ใกล้ตำแหน่งเดิม และมีขนาด/รูปทรงใกล้เคียงกัน
+      const matches = candidates.map(c => {
+        const centerDistance = Math.hypot(
+          c.center.x - previousQuadCenter.x,
+          c.center.y - previousQuadCenter.y
+        );
+
+        const areaRatio = Math.max(c.area, 1) / previousArea;
+        const areaPenalty = Math.abs(Math.log(areaRatio));
+
+        let cornerDistance = 0;
+
+        for (let i = 0; i < 4; i++) {
+          cornerDistance += Math.hypot(
+            c.points[i].x - selectedQuad[i].x,
+            c.points[i].y - selectedQuad[i].y
+          );
+        }
+
+        cornerDistance /= 4;
+
+        const score =
+          (centerDistance / frameDiagonal) +
+          (cornerDistance / frameDiagonal) * 0.25 +
+          areaPenalty * 0.035;
+
+        return {
+          candidate: c,
+          centerDistance,
+          areaRatio,
+          score
+        };
+      }).filter(item =>
+        item.centerDistance <= frameDiagonal * 0.30 &&
+        item.areaRatio >= 0.15 &&
+        item.areaRatio <= 6.5
+      ).sort((a, b) => a.score - b.score);
+
+      return matches.length ? matches[0].candidate : null;
+    }
+
+    // คำนวณพิกัดจุดกลางภาพในกรอบที่เลือก
+    // คงวิธีคำนวณ Perspective Transform และแกน X/Y เดิม
+    function calculateNormalizedXY(quad, width, height) {
+      let source = null;
+      let destination = null;
+      let transform = null;
+      let centerPoint = null;
+      let result = null;
+
+      try {
+        source = cv.matFromArray(
+          4, 1, cv.CV_32FC2,
+          quad.flatMap(p => [p.x, p.y])
+        );
+
+        destination = cv.matFromArray(
+          4, 1, cv.CV_32FC2,
+          [0, 0, 1, 0, 1, 1, 0, 1]
+        );
+
+        transform = cv.getPerspectiveTransform(
+          source,
+          destination
+        );
+
+        centerPoint = cv.matFromArray(
+          1, 1, cv.CV_32FC2,
+          [width / 2, height / 2]
+        );
+
+        result = new cv.Mat();
+
+        cv.perspectiveTransform(
+          centerPoint,
+          result,
+          transform
+        );
+
+        const rawX = result.data32F[0];
+        const rawY = result.data32F[1];
+
+        if (
+          !Number.isFinite(rawX) ||
+          !Number.isFinite(rawY)
+        ) {
+          return lastGoodXY;
+        }
+
+        const x = Math.max(0, Math.min(1, rawX));
+        const y = Math.max(0, Math.min(1, rawY));
+
+        // Exponential smoothing ลดการสั่นของ X/Y
+        if (!smoothedXY) {
+          smoothedXY = { x, y };
+        } else {
+          let dx = x - smoothedXY.x;
+          let dy = y - smoothedXY.y;
+
+          // ตัดการเปลี่ยนแปลงจิ๋ว ๆ จาก noise ของกล้อง
+          if (Math.abs(dx) < XY_DEADBAND) dx = 0;
+          if (Math.abs(dy) < XY_DEADBAND) dy = 0;
+
+          smoothedXY = {
+            x: Math.max(0, Math.min(1,
+              smoothedXY.x + dx * XY_SMOOTHING_ALPHA)),
+            y: Math.max(0, Math.min(1,
+              smoothedXY.y + dy * XY_SMOOTHING_ALPHA))
+          };
+        }
+
+        lastGoodXY = { ...smoothedXY };
+        return lastGoodXY;
+      } catch (error) {
+        console.error("คำนวณพิกัดไม่สำเร็จ:", error);
+        return lastGoodXY;
+      } finally {
+        [
+          source,
+          destination,
+          transform,
+          centerPoint,
+          result
+        ].forEach(mat => {
+          if (mat) mat.delete();
+        });
+      }
+    }
+
+    function processVideo() {
+      if (!isProcessing) return;
+
+      if (!camera.videoWidth || !camera.videoHeight) {
+        requestAnimationFrame(processVideo);
+        return;
+      }
+
+      const width = camera.videoWidth;
+      const height = camera.videoHeight;
+
+      if (
+        canvasOutput.width !== width ||
+        canvasOutput.height !== height
+      ) {
+        canvasOutput.width = width;
+        canvasOutput.height = height;
+      }
+
+      ctx.drawImage(camera, 0, 0, width, height);
+
+      let srcMat = null;
+
+      try {
+        srcMat = cv.imread(canvasOutput);
+
+        const candidates = extractCandidates(
+          srcMat,
+          width,
+          height
+        );
+
+        const chosen = chooseCandidate(candidates);
+
+        if (chosen) {
+          selectedQuad = chosen.points.map(p => ({
+            x: p.x,
+            y: p.y
+          }));
+
+          previousQuadCenter = { ...chosen.center };
+          lostFrames = 0;
+
+          const xy = calculateNormalizedXY(
+            selectedQuad,
+            width,
+            height
+          );
+
+          displayCoordinates(xy.x, xy.y, true);
+
+          // ส่งพิกัด X/Y ที่คำนวณได้ไป Node.js → OSC → TouchDesigner
+          sendXYToTouchDesigner(xy.x, xy.y);
+
+          status.textContent =
+            "สถานะ: ตรวจพบและติดตามกรอบที่ล็อกไว้แล้ว";
+
+          // เมื่อเลือกแล้ว ซ่อนกรอบอื่นทั้งหมด
+          drawFrameOverlays(
+            srcMat,
+            targetLocked ? [] : candidates,
+            selectedQuad
+          );
+        } else if (targetLocked && selectedQuad) {
+          // ถ้าหากกรอบหาย ให้เก็บตำแหน่งล่าสุดไว้
+          // และค้นหากรอบเดิมต่อไปโดยไม่ปลดล็อก
+          lostFrames++;
+
+          drawOpenCvPolygon(
+            srcMat,
+            selectedQuad,
+            "#0bf4ec",
+            3
+          );
+
+          displayCoordinates(
+            lastGoodXY.x,
+            lastGoodXY.y,
+            true
+          );
+
+          status.textContent =
+            `สถานะ: กรอบถูกล็อกไว้ กำลังค้นหากรอบเดิมอีกครั้ง (${lostFrames} เฟรม)`;
+
+          drawFrameOverlays(
+            srcMat,
+            [],
+            selectedQuad
+          );
+        } else {
+          lostFrames++;
+
+          displayCoordinates(0, 0, false);
+
+          status.textContent = selectedPoint
+            ? "สถานะ: แตะภายในกรอบที่ต้องการเลือก"
+            : targetLocked
+              ? "สถานะ: ล็อกเป้าหมายแล้ว แต่ยังไม่พบกรอบเดิม กำลังรอติดตามต่อ"
+              : "สถานะ: กำลังค้นหารูปทรงสี่เหลี่ยม...";
+
+          drawFrameOverlays(
+            srcMat,
+            candidates,
+            null
+          );
+        }
+
+        cv.imshow(canvasOutput, srcMat);
+      } catch (error) {
+        console.error("OpenCV error:", error);
+
+        status.textContent =
+          "เกิดข้อผิดพลาดในการตรวจจับ ดูรายละเอียดใน Console";
+      } finally {
+        if (srcMat) srcMat.delete();
+      }
+
+      requestAnimationFrame(processVideo);
+    }
+
+    // วาดกรอบตามมุมจริงทั้งสี่มุม
+    function drawOpenCvPolygon(
+      mat,
+      points,
+      color,
+      thickness
+    ) {
+      const cvColor =
+        color === "#0bf4ec"
+          ? new cv.Scalar(11, 244, 236, 255)
+          : new cv.Scalar(255, 180, 0, 255);
+
+      for (let i = 0; i < points.length; i++) {
+        const a = points[i];
+        const b = points[(i + 1) % points.length];
+
+        cv.line(
+          mat,
+          new cv.Point(
+            Math.round(a.x),
+            Math.round(a.y)
+          ),
+          new cv.Point(
+            Math.round(b.x),
+            Math.round(b.y)
+          ),
+          cvColor,
+          thickness
+        );
+
+        cv.circle(
+          mat,
+          new cv.Point(
+            Math.round(a.x),
+            Math.round(a.y)
+          ),
+          6,
+          cvColor,
+          -1
+        );
+      }
+    }
+
+    // วาดกรอบที่ตรวจพบ
+    function drawFrameOverlays(
+      mat,
+      candidates,
+      chosenPoints
+    ) {
+      candidates.forEach(c => {
+        if (
+          chosenPoints &&
+          c.points.every((p, i) =>
+            Math.hypot(
+              p.x - chosenPoints[i].x,
+              p.y - chosenPoints[i].y
+            ) < 3
+          )
+        ) {
+          return;
+        }
+
+        drawOpenCvPolygon(
+          mat,
+          c.points,
+          "orange",
+          2
+        );
+      });
+
+      if (chosenPoints) {
+        drawOpenCvPolygon(
+          mat,
+          chosenPoints,
+          "#0bf4ec",
+          4
+        );
+      }
+    }
+
+    // เปิด/ปิดกล้องและส่งสถานะ Active/Inactive
+    button.addEventListener("click", async () => {
+      if (!isOpenCvReady) return;
+
+      if (stream) {
+        isProcessing = false;
+        sendPlayerActive(false);
+
+        stream.getTracks().forEach(track => track.stop());
+
+        stream = null;
+        camera.srcObject = null;
+
+        // ปิดกล้องได้ แต่คงล็อกเป้าหมายไว้จนกว่าจะรีเฟรชเว็บ
+        displayCoordinates(
+          lastGoodXY.x,
+          lastGoodXY.y,
+          targetLocked
+        );
+
+        ctx.clearRect(
+          0,
+          0,
+          canvasOutput.width,
+          canvasOutput.height
+        );
+
+        button.textContent = "เปิดกล้องส่องหา";
+        status.textContent = "สถานะ: ปิดกล้องแล้ว";
+
+        return;
+      }
+
+      try {
+        if (!navigator.mediaDevices?.getUserMedia) {
+          throw new Error(
+            "เบราว์เซอร์ไม่รองรับกล้อง กรุณาเปิดผ่าน HTTPS หรือ localhost"
+          );
+        }
+
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: "environment" }
+          },
+          audio: false
+        });
+
+        camera.srcObject = stream;
+
+        await camera.play();
+
+        isProcessing = true;
+        sendPlayerActive(true);
+
+        button.textContent = "ปิดกล้อง";
+
+        status.textContent = targetLocked
+          ? "สถานะ: กล้องทำงานแล้ว กำลังติดตามกรอบที่ล็อกไว้"
+          : "สถานะ: กล้องทำงานแล้ว แตะภายในกรอบเพื่อเลือกเป้าหมาย";
+
+        requestAnimationFrame(processVideo);
+      } catch (error) {
+        status.textContent =
+          "เปิดกล้องไม่สำเร็จ: " + error.message;
+
+        if (stream) {
+          stream.getTracks().forEach(track => track.stop());
+        }
+
+        stream = null;
+        isProcessing = false;
+        sendPlayerActive(false);
+      }
+    });
+
+    window.addEventListener("pagehide", () => {
+      sendPlayerActive(false);
+      if (stream) stream.getTracks().forEach(track => track.stop());
+      if (socket) socket.close();
+    });
+
+    // ตรวจสอบว่า OpenCV พร้อมทำงานหรือยัง
+    window.addEventListener("load", () => {
+      if (
+        typeof cv !== "undefined" &&
+        cv.Mat &&
+        !isOpenCvReady
+      ) {
+        onOpenCvReady();
+      }
+    });
+  </script>
 </body>
 </html>

@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "osc": "^2.4.5",
+    "ws": "^8.22.1"
+  },
+  "scripts": {
+    "start": "node server.js"
+  }
+}
