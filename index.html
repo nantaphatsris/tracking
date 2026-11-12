@@ -30,7 +30,9 @@ hr{border:0;border-top:1px solid var(--line);margin:14px 0}
 footer{max-width:1050px;margin:0 auto;padding:0 16px 24px;color:var(--muted);font-size:12px}
 @media(max-width:760px){main{grid-template-columns:1fr;padding:10px}.camera{max-height:58vh}header{padding:12px} }
 </style>
-<script src="https://cdn.jsdelivr.net/npm/js-aruco2@2.0.0/src/aruco.min.js"></script>
+<!-- js-aruco2 v2.0.0 ships cv.js and aruco.js; there is no aruco.min.js -->
+<script src="https://cdn.jsdelivr.net/npm/js-aruco2@2.0.0/src/cv.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/js-aruco2@2.0.0/src/aruco.js"></script>
 </head>
 <body>
 <header><div><h1>✳ SKYTRACKER V2</h1><small>Bezel Marker · Live XY · WebSocket / OSC bridge</small></div><small id="libState">กำลังโหลด Marker Engine…</small></header>
@@ -251,7 +253,11 @@ function init(){
   detector=new AR.Detector({dictionaryName:"ARUCO"});
   $("libState").textContent="Marker Engine READY";$("cameraBtn").disabled=false;$("cameraBtn").textContent="เปิดกล้อง";
   generateMarkers();setStatus("พร้อมใช้งาน — ตั้งตำแหน่ง Marker ให้ตรงกับ TV ก่อนเปิดกล้อง","good");
- }else{$("libState").textContent="โหลด Marker Engine ไม่สำเร็จ";setStatus("โหลด js-aruco2 ไม่สำเร็จ ตรวจอินเทอร์เน็ตแล้วรีเฟรช","bad");}
+ }else{
+  $("libState").textContent="Marker Engine NOT READY";
+  $("cameraBtn").disabled=true;
+  setStatus("โหลดไฟล์ cv.js / aruco.js ไม่สำเร็จ หรือ CDN ถูกบล็อก — ตรวจ Network แล้วรีเฟรช","bad");
+ }
 }
 renderMarkerInputs();window.addEventListener("load",init);if(document.readyState==="complete")init();
 })();
