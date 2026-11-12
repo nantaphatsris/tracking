@@ -3,263 +3,171 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>SkyTracker V2 — Bezel Marker Tracking</title>
+<title>SkyTracker</title>
 <style>
-:root{color-scheme:dark;--bg:#080d14;--panel:#111b27;--line:#26384b;--cyan:#14e5dc;--muted:#91a4b8;--green:#57e39b;--orange:#ffb547}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#edf5fb;font:15px/1.5 system-ui,-apple-system,sans-serif}
-header{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}
-h1{font-size:18px;margin:0}header small{color:var(--muted)}
-main{max-width:1050px;margin:auto;padding:16px;display:grid;grid-template-columns:minmax(0,1.3fr) minmax(280px,.7fr);gap:14px}
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;min-width:0}
-.camera{position:relative;background:#020509;border-radius:10px;overflow:hidden;aspect-ratio:3/4;max-height:70vh;display:grid;place-items:center}
+:root{color-scheme:dark;--bg:#090e16;--panel:#111a26;--line:#26374a;--cyan:#28e4dc;--muted:#94a6b8;--green:#62e6a0;--orange:#ffbf5b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#edf5fb;font:15px/1.45 system-ui,-apple-system,sans-serif}
+header{height:54px;padding:0 15px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
+.brand{font-weight:800;letter-spacing:.08em}.brand span{color:var(--cyan)}.tiny{font-size:11px;color:var(--muted)}
+main{width:min(920px,100%);margin:auto;padding:12px;display:grid;gap:10px}
+.camera{position:relative;background:#020509;border:1px solid var(--line);border-radius:12px;overflow:hidden;aspect-ratio:4/3;max-height:58vh;display:grid;place-items:center}
 video{display:none}canvas{width:100%;height:100%;object-fit:contain}
-.overlay{position:absolute;inset:0;pointer-events:none}
-.cross{position:absolute;left:50%;top:50%;width:24px;height:24px;transform:translate(-50%,-50%);border:2px solid var(--cyan);border-radius:50%;box-shadow:0 0 12px #14e5dc88}
+.cross{position:absolute;left:50%;top:50%;width:22px;height:22px;transform:translate(-50%,-50%);border:2px solid var(--cyan);border-radius:50%;pointer-events:none}
 .cross:after{content:"";position:absolute;left:50%;top:50%;width:4px;height:4px;background:var(--cyan);border-radius:50%;transform:translate(-50%,-50%)}
-.readout{position:absolute;left:10px;bottom:10px;background:#020a12dd;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:13px/1.7 ui-monospace,monospace;color:var(--cyan)}
-.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.stack{display:grid;gap:10px}.metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
-.metric{background:#09121d;border:1px solid var(--line);border-radius:9px;padding:10px}.metric b{display:block;font-size:22px;color:var(--cyan);font-family:ui-monospace,monospace}
-button,input,select{font:inherit;border-radius:8px;border:1px solid var(--line);padding:10px;background:#09121d;color:#edf5fb}
-button{background:var(--cyan);color:#061316;font-weight:700;border:0;cursor:pointer}button.secondary{background:#1b2b3c;color:#edf5fb;border:1px solid var(--line)}button:disabled{opacity:.45;cursor:not-allowed}
-label{display:grid;gap:4px;color:var(--muted);font-size:13px}input{width:100%;min-width:0}
-h2{font-size:15px;margin:0 0 10px}.muted{color:var(--muted);font-size:13px}.status{padding:9px 10px;background:#09121d;border:1px solid var(--line);border-radius:8px;color:var(--muted);font-size:13px}
+.hud{position:absolute;left:9px;top:9px;background:#030912d9;border:1px solid #304356;border-radius:8px;padding:7px 10px;font:12px/1.55 ui-monospace,monospace;pointer-events:none}
+.hud b{color:var(--cyan)}.hud .state{color:var(--orange);font-weight:800}
+.controls{display:flex;gap:8px}.controls button{flex:1}
+button,input{font:inherit;border-radius:8px;border:1px solid var(--line);padding:10px;background:#101c2a;color:#edf5fb}
+button{background:var(--cyan);color:#061316;border:0;font-weight:750;cursor:pointer}button.secondary{background:#1a2a3c;color:#edf5fb;border:1px solid var(--line)}
+button:disabled{opacity:.45;cursor:not-allowed}
+.status{font-size:12px;color:var(--muted);padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#0d1621}
 .good{color:var(--green)}.warn{color:var(--orange)}.bad{color:#ff7777}
-hr{border:0;border-top:1px solid var(--line);margin:14px 0}
-.marker-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.marker-card{background:#09121d;border:1px solid var(--line);border-radius:9px;padding:8px;text-align:center}.marker-card svg{width:100%;max-width:110px;height:auto;background:white;padding:5px}
-.marker-card small{display:block;color:var(--muted)}
-footer{max-width:1050px;margin:0 auto;padding:0 16px 24px;color:var(--muted);font-size:12px}
-@media(max-width:760px){main{grid-template-columns:1fr;padding:10px}.camera{max-height:58vh}header{padding:12px} }
+.data{display:flex;gap:8px}.datum{flex:1;border:1px solid var(--line);background:var(--panel);border-radius:9px;padding:8px 11px}
+.datum small{display:block;color:var(--muted);font-size:11px}.datum strong{font:700 22px ui-monospace,monospace;color:var(--cyan)}
+details{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:10px 12px}
+summary{cursor:pointer;font-size:13px;font-weight:650}
+.settings{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+label{display:grid;gap:4px;color:var(--muted);font-size:12px}input{width:100%;min-width:0;padding:8px}
+.marker-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px}
+.marker-card{background:#09121d;border:1px solid var(--line);border-radius:8px;padding:8px;text-align:center}
+.marker-card svg{width:100%;max-width:100px;height:auto;background:#fff;padding:4px}.marker-card small{display:block;color:var(--muted)}
+.inline{display:flex;gap:8px;align-items:center;margin-top:8px}.inline button{white-space:nowrap}
+#wsState{font-size:12px;font-weight:700;color:var(--orange)}
+@media(min-width:760px){main{grid-template-columns:1.35fr .65fr;align-items:start}.camera{grid-row:span 4;max-height:72vh}.settings-panel{grid-column:2}.data{grid-column:2}.status{grid-column:2}.controls{grid-column:2}}
 </style>
-<!-- js-aruco2 v2.0.0 ships cv.js and aruco.js; there is no aruco.min.js -->
 <script src="https://cdn.jsdelivr.net/npm/js-aruco2@2.0.0/src/cv.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/js-aruco2@2.0.0/src/aruco.js"></script>
 </head>
 <body>
-<header><div><h1>✳ SKYTRACKER V2</h1><small>Bezel Marker · Live XY · WebSocket / OSC bridge</small></div><small id="libState">กำลังโหลด Marker Engine…</small></header>
+<header><div class="brand"><span>✳</span> SKYTRACKER</div><div class="tiny" id="libState">LOADING ENGINE</div></header>
 <main>
-<section class="panel stack">
-  <div class="camera" id="cameraBox">
+  <div class="camera">
     <video id="video" autoplay playsinline muted></video>
-    <canvas id="view"></canvas>
-    <div class="overlay"><div class="cross"></div><div class="readout">
-      TRACK: <b id="trackState" class="warn">WAIT</b><br>
-      X: <b id="xVal">0.000</b><br>Y: <b id="yVal">0.000</b><br>
-      MARKERS: <b id="markerCount">0</b>
-    </div></div>
+    <canvas id="view"></canvas><div class="cross"></div>
+    <div class="hud">TRACK: <b id="trackState" class="state">WAIT</b><br>X: <b id="xVal">0.000</b><br>Y: <b id="yVal">0.000</b><br>MARKERS: <b id="markerCount">0</b></div>
   </div>
-  <div class="row">
-    <button id="cameraBtn" disabled>กำลังโหลดระบบ…</button>
-    <button id="printBtn" class="secondary">สร้างแผ่น Marker</button>
+  <div class="controls">
+    <button id="cameraBtn" disabled>กำลังโหลด...</button>
+    <button id="printBtn" class="secondary">Marker</button>
   </div>
-  <div id="status" class="status">สถานะ: โหลดตัวตรวจจับ Marker</div>
-  <div class="metrics">
-    <div class="metric"><span class="muted">Marker IDs ที่พบ</span><b id="ids">—</b></div>
-    <div class="metric"><span class="muted">WebSocket</span><b id="wsState" style="font-size:16px">CONNECTING</b></div>
+  <div class="data">
+    <div class="datum"><small>WEBSOCKET</small><strong id="wsState">OFFLINE</strong></div>
+    <div class="datum"><small>MARKER ID</small><strong id="ids" style="font-size:17px">—</strong></div>
   </div>
-  <p class="muted">กล้องใช้จุดกึ่งกลางภาพเป็นแนวเล็ง (crosshair) แล้วคำนวณจุดตัดบนระนาบ TV ไม่ได้ใช้ขอบจอเป็นกรอบตรวจจับ</p>
-</section>
+  <div id="status" class="status">กำลังเตรียมระบบ...</div>
 
-<aside class="panel stack">
-  <div><h2>1. ตั้งค่าขนาดจอและ Marker</h2><p class="muted">วัดพื้นที่ภาพของ TV เป็นมิลลิเมตร ไม่รวมขอบพลาสติก</p></div>
-  <div class="row">
-    <label style="flex:1">ความกว้างจอ (mm)<input id="screenW" type="number" min="100" value="1600"></label>
-    <label style="flex:1">ความสูงจอ (mm)<input id="screenH" type="number" min="100" value="900"></label>
-  </div>
-  <label>ขนาด Marker (mm)<input id="markerSize" type="number" min="20" value="50"></label>
-  <p class="muted">ตำแหน่ง X/Y คือจุดกึ่งกลาง Marker เทียบกับมุมซ้ายบนของพื้นที่ภาพ TV (หน่วย mm) ค่าติดลบหมายถึงอยู่บน Bezel นอกพื้นที่ภาพ</p>
-  <div class="marker-grid" id="markerList"></div>
-  <button id="applyBtn" class="secondary">ใช้ตำแหน่ง Marker เหล่านี้</button>
-  <hr>
-  <h2>2. WebSocket → Node.js → OSC</h2>
-  <label>WebSocket URL<input id="wsUrl" value="wss://inclusion-judge-roger-indexed.trycloudflare.com" placeholder="wss://your-tunnel.example"></label>
-  <div class="row"><button id="reconnectBtn" class="secondary">เชื่อมต่อใหม่</button><span class="muted">ส่ง {type:"xy", x, y} ทุก 50 ms</span></div>
-  <hr>
-  <h2>3. การทำงานของ Tracking</h2>
-  <div class="status">TRACKING: พบ Marker และคำนวณ XY จริง</div>
-  <div class="status">LOST: ไม่พบ Marker — ไม่ส่งค่าเก่าซ้ำ</div>
-  <p class="muted">รุ่นทดลองนี้ใช้ Homography จากมุม Marker ที่ตรวจพบอย่างน้อย 1 ตัว หากเห็นหลายตัวจะรวมจุดเพื่อเพิ่มความเสถียร</p>
-</aside>
+  <details class="settings-panel">
+    <summary>ตั้งค่าจอ / Marker / WebSocket</summary>
+    <div class="settings">
+      <label>Screen width (mm)<input id="screenW" type="number" min="100" value="1600"></label>
+      <label>Screen height (mm)<input id="screenH" type="number" min="100" value="900"></label>
+      <label>Marker size (mm)<input id="markerSize" type="number" min="20" value="50"></label>
+      <label>WebSocket URL<input id="wsUrl" placeholder="ws://192.168.1.10:8080 หรือ wss://..."></label>
+    </div>
+    <p class="tiny">พิกัด X/Y ของ Marker เป็นตำแหน่งศูนย์กลางเทียบมุมซ้ายบนของพื้นที่ภาพ TV (mm)</p>
+    <div class="marker-grid" id="markerList"></div>
+    <div class="inline"><button id="applyBtn" class="secondary">บันทึกตำแหน่ง</button><button id="reconnectBtn" class="secondary">เชื่อมต่อ WS</button></div>
+  </details>
+  <details id="printDetails">
+    <summary>แผ่น Marker สำหรับพิมพ์</summary>
+    <p class="tiny">พิมพ์ 100% / Actual size ห้าม Fit to page และตรวจขนาดด้านนอกให้ตรงกับค่าที่ตั้งไว้</p>
+    <div id="printSheet" class="marker-grid"></div>
+  </details>
 </main>
-<section class="panel" style="max-width:1050px;margin:0 auto 14px">
-<h2>แผ่น Marker สำหรับพิมพ์</h2>
-<p class="muted">พิมพ์ขนาดจริง 100% ห้ามเลือก Fit to page และวัดด้านนอกของสี่เหลี่ยม Marker ให้ตรงกับค่าขนาดที่ตั้งไว้</p>
-<div id="printSheet" class="marker-grid"></div>
-</section>
-<footer>Prototype V2 · ใช้ HTTPS บน iPhone เพื่ออนุญาตกล้อง · ตรวจสอบการวาง Marker และ Calibration ก่อนใช้จริงกับ TouchDesigner</footer>
-
 <script>
-(() => {
-const $ = id => document.getElementById(id);
-const video=$("video"), view=$("view"), vctx=view.getContext("2d");
-const work=document.createElement("canvas"), wctx=work.getContext("2d",{willReadFrequently:true});
-let detector=null, stream=null, running=false, raf=0, socket=null, lastSend=0, lastGood=null;
-let config={screenW:1600,screenH:900,markerSize:50,markers:[
- {id:0,x:35,y:-28},{id:1,x:1565,y:-28},{id:2,x:-28,y:450},{id:3,x:1628,y:450}
-]};
+(()=>{
+const $=id=>document.getElementById(id), video=$("video"),view=$("view"),ctx=view.getContext("2d");
+const work=document.createElement("canvas"),wctx=work.getContext("2d",{willReadFrequently:true});
+let detector=null,stream=null,running=false,raf=0,socket=null,lastDetect=0,lastSend=0,lastGood=null;
+const config={screenW:1600,screenH:900,markerSize:50,markers:[
+{id:0,x:35,y:-28},{id:1,x:1565,y:-28},{id:2,x:-28,y:450},{id:3,x:1628,y:450}]};
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-function setStatus(msg,cls=""){ $("status").textContent="สถานะ: "+msg; $("status").className="status "+cls; }
-function updateXY(x,y,found){
- $("xVal").textContent=x.toFixed(3); $("yVal").textContent=y.toFixed(3);
- $("trackState").textContent=found?"TRACKING":"LOST";
- $("trackState").className=found?"good":"bad";
-}
-function renderMarkerInputs(){
+function status(t,c=""){$("status").textContent=t;$("status").className="status "+c}
+function update(x,y,ok){$("xVal").textContent=x.toFixed(3);$("yVal").textContent=y.toFixed(3);$("trackState").textContent=ok?"TRACKING":"LOST";$("trackState").className=ok?"good":"bad"}
+function renderConfig(){
  $("markerList").innerHTML="";
- config.markers.forEach((m,i)=>{
-  const card=document.createElement("div");card.className="marker-card";
-  card.innerHTML=`<b>ID ${m.id}</b><div class="row" style="margin-top:6px"><label style="flex:1">X mm<input data-i="${i}" data-k="x" type="number" value="${m.x}"></label><label style="flex:1">Y mm<input data-i="${i}" data-k="y" type="number" value="${m.y}"></label></div>`;
-  $("markerList").appendChild(card);
- });
+ config.markers.forEach((m,i)=>{const d=document.createElement("div");d.className="marker-card";d.innerHTML=`<b>ID ${m.id}</b><div class="settings"><label>X mm<input data-i="${i}" data-k="x" type="number" value="${m.x}"></label><label>Y mm<input data-i="${i}" data-k="y" type="number" value="${m.y}"></label></div>`;$("markerList").appendChild(d)});
 }
-function collectConfig(){
- config.screenW=Number($("screenW").value);config.screenH=Number($("screenH").value);config.markerSize=Number($("markerSize").value);
- document.querySelectorAll("#markerList input").forEach(el=>config.markers[Number(el.dataset.i)][el.dataset.k]=Number(el.value));
+function readConfig(){
+ config.screenW=+$("screenW").value;config.screenH=+$("screenH").value;config.markerSize=+$("markerSize").value;
+ document.querySelectorAll("#markerList input").forEach(e=>config.markers[+e.dataset.i][e.dataset.k]=+e.value);
 }
-$("applyBtn").onclick=()=>{collectConfig();setStatus("อัปเดตตำแหน่ง Marker แล้ว — ติดตั้งให้ตรงกับค่าที่กำหนด","good");};
-function generateMarkers(){
+$("applyBtn").onclick=()=>{readConfig();status("อัปเดตตำแหน่ง Marker แล้ว","good")};
+function makeMarkers(){
  const out=$("printSheet");out.innerHTML="";
- if(!window.AR?.Dictionary){out.textContent="Marker Engine ยังโหลดไม่เสร็จ";return;}
+ if(!window.AR?.Dictionary){out.textContent="Marker engine ยังไม่พร้อม";return}
  const dict=new AR.Dictionary("ARUCO");
- config.markers.forEach(m=>{
-  const card=document.createElement("div");card.className="marker-card";
-  const holder=document.createElement("div");holder.innerHTML=dict.generateSVG(m.id);
-  const svg=holder.querySelector("svg");if(svg){svg.setAttribute("role","img");}
-  card.appendChild(holder);
-  const t=document.createElement("b");t.textContent="ARUCO ID "+m.id;card.appendChild(t);
-  const sm=document.createElement("small");sm.textContent="ตั้งขนาดด้านนอก "+config.markerSize+" mm";card.appendChild(sm);
-  out.appendChild(card);
- });
+ config.markers.forEach(m=>{const d=document.createElement("div");d.className="marker-card";const h=document.createElement("div");h.innerHTML=dict.generateSVG(m.id);d.appendChild(h);const b=document.createElement("b");b.textContent="ARUCO ID "+m.id;d.appendChild(b);const s=document.createElement("small");s.textContent=config.markerSize+" mm";d.appendChild(s);out.appendChild(d)});
 }
-$("printBtn").onclick=()=>{collectConfig();generateMarkers();$("printSheet").scrollIntoView({behavior:"smooth"});};
-function solveLinear(A,b){
- const n=b.length;A=A.map((r,i)=>r.slice().concat([b[i]]));
- for(let i=0;i<n;i++){
-  let p=i;for(let r=i+1;r<n;r++)if(Math.abs(A[r][i])>Math.abs(A[p][i]))p=r;
-  if(Math.abs(A[p][i])<1e-10)throw Error("จุด Marker อยู่ในแนวที่คำนวณไม่ได้");
-  [A[i],A[p]]=[A[p],A[i]];
-  const d=A[i][i];for(let c=i;c<=n;c++)A[i][c]/=d;
-  for(let r=0;r<n;r++)if(r!==i){const f=A[r][i];for(let c=i;c<=n;c++)A[r][c]-=f*A[i][c];}
- }
+$("printBtn").onclick=()=>{readConfig();makeMarkers();$("printDetails").open=true;$("printDetails").scrollIntoView({behavior:"smooth",block:"nearest"})};
+function solve(A,b){
+ const n=b.length;A=A.map((r,i)=>r.slice().concat(b[i]));
+ for(let i=0;i<n;i++){let p=i;for(let r=i+1;r<n;r++)if(Math.abs(A[r][i])>Math.abs(A[p][i]))p=r;if(Math.abs(A[p][i])<1e-10)throw Error("Marker geometry invalid");[A[i],A[p]]=[A[p],A[i]];let d=A[i][i];for(let c=i;c<=n;c++)A[i][c]/=d;for(let r=0;r<n;r++)if(r!==i){let f=A[r][i];for(let c=i;c<=n;c++)A[r][c]-=f*A[i][c]}}
  return A.map(r=>r[n]);
 }
-function fitHomography(pairs){
- if(pairs.length<4)throw Error("ต้องมีจุดอ้างอิงอย่างน้อย 4 จุด");
- const ata=Array.from({length:8},()=>Array(8).fill(0)),atb=Array(8).fill(0);
- for(const p of pairs){
-  const {X,Y,u,v}=p;
-  const rows=[
-   {a:[X,Y,1,0,0,0,-u*X,-u*Y],b:u},
-   {a:[0,0,0,X,Y,1,-v*X,-v*Y],b:v}
-  ];
-  for(const {a,b} of rows)for(let i=0;i<8;i++){atb[i]+=a[i]*b;for(let j=0;j<8;j++)ata[i][j]+=a[i]*a[j];}
- }
- const h=solveLinear(ata,atb);return [...h,1];
+function homography(pairs){
+ if(pairs.length<4)throw Error("Need one complete marker");
+ const A=Array.from({length:8},()=>Array(8).fill(0)),b=Array(8).fill(0);
+ for(const {X,Y,u,v} of pairs){const rows=[[X,Y,1,0,0,0,-u*X,-u*Y,u],[0,0,0,X,Y,1,-v*X,-v*Y,v]];
+ for(const r of rows)for(let i=0;i<8;i++){b[i]+=r[i]*r[8];for(let j=0;j<8;j++)A[i][j]+=r[i]*r[j]}}
+ return [...solve(A,b),1];
 }
-function invert3(m){
- const [a,b,c,d,e,f,g,h,i]=m;
- const A=e*i-f*h,B=c*h-b*i,C=b*f-c*e,D=f*g-d*i,E=a*i-c*g,F=c*d-a*f,G=d*h-e*g,H=b*g-a*h,I=a*e-b*d;
- const det=a*A+b*D+c*G;if(Math.abs(det)<1e-12)throw Error("Homography singular");
- return [A,B,C,D,E,F,G,H,I].map(x=>x/det);
+function inverse(m){
+ const [a,b,c,d,e,f,g,h,i]=m,A=e*i-f*h,B=c*h-b*i,C=b*f-c*e,D=f*g-d*i,E=a*i-c*g,F=c*d-a*f,G=d*h-e*g,H=b*g-a*h,I=a*e-b*d,det=a*A+b*D+c*G;
+ if(Math.abs(det)<1e-12)throw Error("Homography singular");return [A,B,C,D,E,F,G,H,I].map(x=>x/det);
 }
-function project(H,x,y){
- const z=H[6]*x+H[7]*y+H[8];return {x:(H[0]*x+H[1]*y+H[2])/z,y:(H[3]*x+H[4]*y+H[5])/z};
+function project(H,x,y){const z=H[6]*x+H[7]*y+H[8];return{x:(H[0]*x+H[1]*y+H[2])/z,y:(H[3]*x+H[4]*y+H[5])/z}}
+function pairsFor(markers){
+ const out=[],half=config.markerSize/2,known=new Map(config.markers.map(m=>[m.id,m]));
+ for(const m of markers){const pos=known.get(m.id);if(!pos)continue;[[-half,-half],[half,-half],[half,half],[-half,half]].forEach((q,i)=>out.push({X:pos.x+q[0],Y:pos.y+q[1],u:m.corners[i].x,v:m.corners[i].y}))}
+ return out;
 }
-function buildCorrespondences(markers){
- const pairs=[],half=config.markerSize/2,known=new Map(config.markers.map(m=>[m.id,m]));
- for(const marker of markers){
-  const m=known.get(marker.id);if(!m)continue;
-  const local=[[-half,-half],[half,-half],[half,half],[-half,half]];
-  marker.corners.forEach((c,i)=>pairs.push({X:m.x+local[i][0],Y:m.y+local[i][1],u:c.x,v:c.y}));
- }
- return pairs;
+function connect(){
+ const url=$("wsUrl").value.trim();if(!url){$("wsState").textContent="NO URL";status("ใส่ WebSocket URL ในตั้งค่าก่อน","warn");return}
+ if(socket)socket.close();
+ try{socket=new WebSocket(url)}catch(e){$("wsState").textContent="ERROR";return}
+ $("wsState").textContent="CONNECT…";
+ socket.onopen=()=>{$("wsState").textContent="CONNECTED";status("WebSocket connected","good")};
+ socket.onclose=()=>{$("wsState").textContent="CLOSED"};
+ socket.onerror=()=>{$("wsState").textContent="ERROR";status("WebSocket connection error","bad")};
+ socket.onmessage=e=>{try{const d=JSON.parse(e.data);if(d.type==="error")status(d.message||"Server error","bad")}catch(_){}};
 }
-function drawMarkerCorners(markers,scaleX,scaleY){
- vctx.save();vctx.lineWidth=Math.max(2,view.width/500);vctx.strokeStyle="#ffb547";vctx.fillStyle="#14e5dc";
- for(const marker of markers){
-  const pts=marker.corners.map(p=>({x:p.x*scaleX,y:p.y*scaleY}));
-  vctx.beginPath();pts.forEach((p,i)=>i?vctx.lineTo(p.x,p.y):vctx.moveTo(p.x,p.y));vctx.closePath();vctx.stroke();
-  pts.forEach(p=>{vctx.beginPath();vctx.arc(p.x,p.y,5,0,Math.PI*2);vctx.fill();});
-  vctx.fillStyle="#fff";vctx.font="18px sans-serif";vctx.fillText("ID "+marker.id,pts[0].x,pts[0].y-8);vctx.fillStyle="#14e5dc";
- }
- vctx.restore();
-}
-function wsConnect(){
- const url=$("wsUrl").value.trim();if(!url)return;
- if(socket){try{socket.close();}catch(e){}}
- try{socket=new WebSocket(url);}catch(e){$("wsState").textContent="ERROR";return;}
- $("wsState").textContent="CONNECTING";
- socket.addEventListener("open",()=>{$("wsState").textContent="OPEN";});
- socket.addEventListener("message",e=>{try{const d=JSON.parse(e.data);if(d.type==="welcome")$("wsState").textContent="PLAYER "+d.playerId;else if(d.type==="error")setStatus(d.message||"Server error","bad");}catch(_){}});
- socket.addEventListener("close",()=>{$("wsState").textContent="CLOSED";});
- socket.addEventListener("error",()=>{$("wsState").textContent="ERROR";});
-}
-function send(data){if(socket?.readyState===WebSocket.OPEN){socket.send(JSON.stringify(data));return true;}return false;}
-function sendXY(x,y){
- const now=performance.now();if(now-lastSend<50)return;lastSend=now;
- send({type:"xy",x:clamp(x,0,1),y:clamp(y,0,1)});
-}
-$("reconnectBtn").onclick=wsConnect;wsConnect();
-function frame(){
- if(!running)return;
- if(video.readyState<2){raf=requestAnimationFrame(frame);return;}
- const vw=video.videoWidth,vh=video.videoHeight;
- if(view.width!==vw||view.height!==vh){view.width=vw;view.height=vh;}
- vctx.drawImage(video,0,0,vw,vh);
- const maxW=640,scale=Math.min(1,maxW/vw),ww=Math.round(vw*scale),wh=Math.round(vh*scale);
- work.width=ww;work.height=wh;wctx.drawImage(video,0,0,ww,wh);
+function send(obj){if(socket&&socket.readyState===WebSocket.OPEN){socket.send(JSON.stringify(obj));return true}return false}
+$("reconnectBtn").onclick=connect;
+function sendXY(x,y){const t=performance.now();if(t-lastSend<50)return;lastSend=t;send({type:"xy",x:clamp(x,0,1),y:clamp(y,0,1)})}
+function frame(t){
+ if(!running)return;raf=requestAnimationFrame(frame);
+ if(video.readyState<2||t-lastDetect<66)return; // ~15 detection frames/sec
+ lastDetect=t;
+ const vw=video.videoWidth,vh=video.videoHeight,scale=Math.min(1,640/vw),ww=Math.max(1,Math.round(vw*scale)),wh=Math.max(1,Math.round(vh*scale));
+ if(work.width!==ww||work.height!==wh){work.width=ww;work.height=wh;view.width=ww;view.height=wh}
+ wctx.drawImage(video,0,0,ww,wh);ctx.drawImage(work,0,0);
  try{
-  const image=wctx.getImageData(0,0,ww,wh);
-  const detected=detector.detect(image);
-  const valid=detected.filter(m=>config.markers.some(k=>k.id===m.id));
-  $("markerCount").textContent=valid.length;
-  $("ids").textContent=valid.length?valid.map(m=>m.id).join(", "):"—";
-  if(valid.length){
-   const pairs=buildCorrespondences(valid);
-   const H=fitHomography(pairs),inv=invert3(H);
-   const p=project(inv,ww/2,wh/2);
-   const x=p.x/config.screenW,y=p.y/config.screenH;
-   if(Number.isFinite(x)&&Number.isFinite(y)){
-    const inside=x>=0&&x<=1&&y>=0&&y<=1;
-    lastGood={x:clamp(x,0,1),y:clamp(y,0,1)};
-    updateXY(lastGood.x,lastGood.y,true);sendXY(lastGood.x,lastGood.y);
-    setStatus(`พบ Marker ${valid.length} ตัว (ID ${valid.map(m=>m.id).join(", ")}) · ${inside?"จุดเล็งอยู่ในพื้นที่จอ":"จุดเล็งเลยขอบพื้นที่จอ"}`,inside?"good":"warn");
-   }else throw Error("คำนวณพิกัดไม่สำเร็จ");
-   drawMarkerCorners(valid,vw/ww,vh/wh);
-  }else{
-   updateXY(lastGood?.x??0,lastGood?.y??0,false);
-   setStatus("ไม่พบ Marker ที่ลงทะเบียน — หยุดส่ง XY ชั่วคราว","bad");
-  }
- }catch(err){
-  updateXY(lastGood?.x??0,lastGood?.y??0,false);
-  setStatus(err.message||"Tracking error","bad");
- }
- raf=requestAnimationFrame(frame);
+  const found=detector.detect(wctx.getImageData(0,0,ww,wh)).filter(m=>config.markers.some(k=>k.id===m.id));
+  $("markerCount").textContent=found.length;$("ids").textContent=found.length?found.map(m=>m.id).join(","):"—";
+  if(!found.length){update(lastGood?.x??0,lastGood?.y??0,false);status("ไม่พบ Marker ที่ลงทะเบียน — หยุดส่ง XY","bad");return}
+  const H=homography(pairsFor(found)),p=project(inverse(H),ww/2,wh/2),x=p.x/config.screenW,y=p.y/config.screenH;
+  if(!Number.isFinite(x)||!Number.isFinite(y))throw Error("Invalid XY");
+  lastGood={x:clamp(x,0,1),y:clamp(y,0,1)};update(lastGood.x,lastGood.y,true);sendXY(lastGood.x,lastGood.y);
+  const inside=x>=0&&x<=1&&y>=0&&y<=1;
+  status(`Tracking · ${found.length} marker${found.length>1?"s":""} · ${inside?"ON SCREEN":"OUTSIDE SCREEN"}`,inside?"good":"warn");
+  ctx.save();ctx.strokeStyle="#ffb547";ctx.lineWidth=2;
+  for(const m of found){ctx.beginPath();m.corners.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();ctx.stroke()}
+  ctx.restore();
+ }catch(e){update(lastGood?.x??0,lastGood?.y??0,false);status(e.message||"Tracking error","bad")}
 }
-async function toggleCamera(){
- if(running){
-  running=false;cancelAnimationFrame(raf);if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;video.srcObject=null;send({type:"active",active:false});$("cameraBtn").textContent="เปิดกล้อง";setStatus("กล้องหยุดแล้ว");return;
- }
- try{
-  if(!navigator.mediaDevices?.getUserMedia)throw Error("ต้องเปิดผ่าน HTTPS และเบราว์เซอร์ที่รองรับกล้อง");
-  stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:"environment"},width:{ideal:1280},height:{ideal:720}}});
-  video.srcObject=stream;await video.play();running=true;send({type:"active",active:true});$("cameraBtn").textContent="ปิดกล้อง";setStatus("กล้องพร้อม — กำลังหา Marker บน Bezel");
-  raf=requestAnimationFrame(frame);
- }catch(e){setStatus("เปิดกล้องไม่สำเร็จ: "+e.message,"bad");}
+async function camera(){
+ if(running){running=false;cancelAnimationFrame(raf);stream?.getTracks().forEach(t=>t.stop());stream=null;video.srcObject=null;send({type:"active",active:false});$("cameraBtn").textContent="เปิดกล้อง";status("กล้องหยุดแล้ว");return}
+ try{if(!navigator.mediaDevices?.getUserMedia)throw Error("ต้องเปิดผ่าน HTTPS");stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:"environment"},width:{ideal:960},height:{ideal:540}}});video.srcObject=stream;await video.play();running=true;send({type:"active",active:true});$("cameraBtn").textContent="ปิดกล้อง";status("กล้องพร้อม — กำลังค้นหา Marker");raf=requestAnimationFrame(frame)}
+ catch(e){status("เปิดกล้องไม่ได้: "+e.message,"bad")}
 }
-$("cameraBtn").onclick=toggleCamera;
-window.addEventListener("pagehide",()=>{send({type:"active",active:false});if(stream)stream.getTracks().forEach(t=>t.stop());if(socket)socket.close();});
+$("cameraBtn").onclick=camera;
 function init(){
- if(window.AR?.Detector&&window.AR?.Dictionary){
-  detector=new AR.Detector({dictionaryName:"ARUCO"});
-  $("libState").textContent="Marker Engine READY";$("cameraBtn").disabled=false;$("cameraBtn").textContent="เปิดกล้อง";
-  generateMarkers();setStatus("พร้อมใช้งาน — ตั้งตำแหน่ง Marker ให้ตรงกับ TV ก่อนเปิดกล้อง","good");
- }else{
-  $("libState").textContent="Marker Engine NOT READY";
-  $("cameraBtn").disabled=true;
-  setStatus("โหลดไฟล์ cv.js / aruco.js ไม่สำเร็จ หรือ CDN ถูกบล็อก — ตรวจ Network แล้วรีเฟรช","bad");
- }
+ if(window.AR?.Detector&&window.AR?.Dictionary){detector=new AR.Detector({dictionaryName:"ARUCO"});$("libState").textContent="ENGINE READY";$("cameraBtn").disabled=false;$("cameraBtn").textContent="เปิดกล้อง";makeMarkers();status("พร้อมใช้งาน")}
+ else{$("libState").textContent="ENGINE ERROR";status("โหลด Marker Engine ไม่สำเร็จ — ตรวจอินเทอร์เน็ตแล้วรีเฟรช","bad")}
 }
-renderMarkerInputs();window.addEventListener("load",init);if(document.readyState==="complete")init();
+renderConfig();window.addEventListener("load",init);if(document.readyState==="complete")init();
+window.addEventListener("pagehide",()=>{send({type:"active",active:false});stream?.getTracks().forEach(t=>t.stop());socket?.close()});
 })();
 </script>
 </body>
