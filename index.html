@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#090b20">
+<title>Star Pointer Tracking</title>
+<style>
+:root{color-scheme:dark;--bg:#090b20;--panel:#151832;--line:#34395f;--accent:#c9a4ff;--good:#7de0b0;--bad:#ff8797}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% 0%,#28244b,var(--bg) 65%);color:#f4f0ff;font:15px system-ui,-apple-system,sans-serif}
+main{max-width:900px;margin:auto;padding:18px 14px 40px}.head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
+h1{font-size:20px;margin:0}.sub{color:#b7b3d0;font-size:12px;margin-top:4px}
+.pill{border:1px solid var(--line);border-radius:99px;padding:6px 10px;font-size:12px;color:#c9c5df}
+.panel{background:#151832cc;border:1px solid var(--line);border-radius:16px;padding:14px;margin:12px 0;box-shadow:0 10px 35px #0003}
+.preview{position:relative;background:#050611;border-radius:12px;overflow:hidden;aspect-ratio:4/3;display:grid;place-items:center}
+video{width:100%;height:100%;object-fit:cover;display:block}.aim{position:absolute;left:50%;top:50%;width:34px;height:34px;transform:translate(-50%,-50%);pointer-events:none}
+.aim:before,.aim:after{content:"";position:absolute;background:#fff;box-shadow:0 0 8px #c9a4ff}.aim:before{width:2px;height:34px;left:16px}.aim:after{height:2px;width:34px;top:16px}
+.aim i{position:absolute;width:7px;height:7px;border:1px solid #fff;border-radius:50%;left:13px;top:13px}
+.row{display:flex;gap:9px;flex-wrap:wrap;align-items:center}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.stat{background:#0c1027;border-radius:10px;padding:10px}.stat small{display:block;color:#aaa6c7;font-size:11px}.stat strong{font-size:18px;font-variant-numeric:tabular-nums}
+button,input{font:inherit;border-radius:10px;border:1px solid var(--line);padding:11px 12px;background:#0d1129;color:#fff}
+button{background:#7f5bb9;border:0;font-weight:650;cursor:pointer}button.secondary{background:#292b4b;border:1px solid var(--line)}button:disabled{opacity:.45}
+input{width:100%;margin:6px 0 10px}label{font-size:12px;color:#c4bfdc} .muted{color:#aaa6c7;font-size:12px;line-height:1.55}
+.status{display:inline-block;width:8px;height:8px;border-radius:50%;background:#888;margin-right:6px}.good{background:var(--good)}.bad{background:var(--bad)}
+.ref{width:100%;max-height:170px;object-fit:contain;background:#090b20;border-radius:10px}
+canvas{display:none}.foot{font-size:11px;color:#8e8aa9;text-align:center;margin-top:18px}
+@media(min-width:650px){.layout{display:grid;grid-template-columns:1.3fr .7fr;gap:12px}.layout .panel{margin:0}}
+</style>
+</head>
+<body>
+<main>
+ <div class="head"><div><h1>✦ Star Pointer</h1><div class="sub">Natural Feature Tracking · Camera → XY → TouchDesigner</div></div><span class="pill">WEB DEMO 01</span></div>
+ <div class="layout">
+  <section class="panel">
+   <div class="row" style="justify-content:space-between;margin-bottom:10px"><b>Camera View</b><span class="muted" id="camStatus">ยังไม่ได้เปิดกล้อง</span></div>
+   <div class="preview"><video id="video" autoplay muted playsinline></video><div class="aim"><i></i></div></div>
+   <div class="row" style="margin-top:12px"><button id="start">เปิดกล้องหลัง</button><button class="secondary" id="stop" disabled>หยุดกล้อง</button><button class="secondary" id="track" disabled>เริ่ม Tracking</button></div>
+   <div class="stats">
+    <div class="stat"><small>ตำแหน่ง X</small><strong id="xval">—</strong></div>
+    <div class="stat"><small>ตำแหน่ง Y</small><strong id="yval">—</strong></div>
+    <div class="stat"><small>Good Matches</small><strong id="matches">—</strong></div>
+   </div>
+   <p class="muted" id="trackStatus">กำลังรอ OpenCV.js…</p>
+  </section>
+  <section class="panel">
+   <b>Reference Artwork</b>
+   <p class="muted">ภาพต้นฉบับที่ใช้จับคู่คุณลักษณะ (ORB)</p>
+   <img class="ref" src="reference.jpg" id="reference" alt="Reference star artwork">
+   <div style="height:12px"></div>
+   <b>TouchDesigner WebSocket</b>
+   <label for="wsurl">WebSocket URL</label>
+   <input id="wsurl" value="ws://localhost:9980" autocapitalize="off" spellcheck="false">
+   <div class="row"><button id="connect" class="secondary">เชื่อมต่อ</button><span class="muted" id="wsStatus"><i class="status"></i>ยังไม่เชื่อมต่อ</span></div>
+   <p class="muted">ส่ง JSON เมื่อ Tracking สำเร็จ: <code>{"type":"pointer","x":0.5,"y":0.5,"tracking":true}</code></p>
+  </section>
+ </div>
+ <section class="panel">
+  <b>วิธีทดลอง</b>
+  <ol class="muted" style="padding-left:20px">
+   <li>เปิดเว็บผ่าน HTTPS แล้วอนุญาตใช้กล้องหลัง</li>
+   <li>ให้ TV แสดงภาพ Reference นี้ โดยไม่ยืดหรือครอปภาพ</li>
+   <li>หันกล้องไปยัง TV ให้เห็นรายละเอียดดาวหลายบริเวณ แล้วกด “เริ่ม Tracking”</li>
+   <li>เล็งจุดกึ่งกลางหน้าจอมือถือไปยังตำแหน่งต่าง ๆ บนภาพ พิกัด X/Y จะเปลี่ยนตาม</li>
+   <li>ถ้าต้องการส่งเข้า TouchDesigner ให้เปิด WebSocket server แล้วเชื่อมต่อ URL ให้ถูกต้อง</li>
+  </ol>
+  <p class="muted">ข้อจำกัด: ภาพที่เห็นต้องมีรายละเอียดตรงกับ Reference มากพอ และเป็นภาพนิ่ง การจับคู่ไม่สำเร็จจะแสดง Tracking Lost แทนการเดาพิกัด</p>
+ </section>
+ <div class="foot">Prototype สำหรับทดสอบแนวคิด · พิกัด X/Y อยู่ในช่วง 0–1 โดย Y=0 คือด้านบน</div>
+</main>
+<canvas id="work"></canvas>
+<script async src="https://docs.opencv.org/4.x/opencv.js" onload="opencvLoaded()"></script>
+<script>
+const $=id=>document.getElementById(id);
+let cvReady=false, camera=null, running=false, refGray=null, refKp=null, refDesc=null, orb=null, matcher=null, ws=null, frameNo=0;
+function setTrack(s){$('trackStatus').textContent=s}
+function opencvLoaded(){if(typeof cv==='undefined'){setTrack('โหลด OpenCV.js ไม่สำเร็จ ตรวจสอบอินเทอร์เน็ตแล้วรีเฟรช');return}
+ cv['onRuntimeInitialized']=()=>{cvReady=true;setTrack('OpenCV พร้อมใช้งาน · โหลดภาพอ้างอิงแล้วเมื่อเริ่ม Tracking')}}
+$('reference').addEventListener('load',()=>{});
+$('start').onclick=async()=>{try{
+ camera=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}}});
+ $('video').srcObject=camera;await $('video').play();$('camStatus').textContent='กล้องทำงาน';$('stop').disabled=false;$('track').disabled=!cvReady;
+ }catch(e){$('camStatus').textContent='เปิดกล้องไม่ได้: '+e.message}}
+$('stop').onclick=()=>{if(camera)camera.getTracks().forEach(t=>t.stop());camera=null;running=false;$('video').srcObject=null;$('camStatus').textContent='หยุดกล้อง';$('stop').disabled=true;$('track').disabled=true;setTrack('หยุดการทำงานแล้ว')}
+$('track').onclick=()=>{if(!cvReady||!camera)return; if(!running){initTracking();running=true;$('track').textContent='หยุด Tracking';setTrack('กำลังค้นหาจุดอ้างอิง…')}else{running=false;$('track').textContent='เริ่ม Tracking';setTrack('หยุด Tracking แล้ว')}};
+function initTracking(){
+ const img=$('reference'), c=$('work');c.width=img.naturalWidth;c.height=img.naturalHeight;
+ const ctx=c.getContext('2d');ctx.drawImage(img,0,0);let src=cv.imread(c);refGray=new cv.Mat();cv.cvtColor(src,refGray,cv.COLOR_RGBA2GRAY);
+ orb=new cv.ORB(1800);refKp=new cv.KeyPointVector();refDesc=new cv.Mat();orb.detectAndCompute(refGray,new cv.Mat(),refKp,refDesc);matcher=new cv.BFMatcher(cv.NORM_HAMMING,true);src.delete();
+ if(refDesc.rows<8){setTrack('ภาพอ้างอิงมี feature น้อยเกินไป');running=false;return}
+ $('track').disabled=false;processFrame();
+}
+function processFrame(){if(!running)return;requestAnimationFrame(processFrame);if(++frameNo%3!==0)return;
+ const v=$('video');if(v.readyState<2)return;
+ const c=$('work'),w=640,h=Math.round(640*v.videoHeight/v.videoWidth);c.width=w;c.height=h;
+ const ctx=c.getContext('2d');ctx.drawImage(v,0,0,w,h);
+ let src=cv.imread(c),gray=new cv.Mat();cv.cvtColor(src,gray,cv.COLOR_RGBA2GRAY);
+ let kp=new cv.KeyPointVector(),desc=new cv.Mat();orb.detectAndCompute(gray,new cv.Mat(),kp,desc);
+ let good=[];
+ if(!desc.empty()&&desc.rows>=8){
+  let matches=new cv.DMatchVector();matcher.match(desc,refDesc,matches);
+  let arr=[];for(let i=0;i<matches.size();i++)arr.push(matches.get(i));
+  arr.sort((a,b)=>a.distance-b.distance);good=arr.slice(0,Math.min(100,arr.length)).filter(m=>m.distance<58);
+  if(good.length>=8){
+   let a=[],b=[];good.forEach(m=>{let p=kp.get(m.queryIdx).pt,q=refKp.get(m.trainIdx).pt;a.push(p.x,p.y);b.push(q.x,q.y)});
+   let srcPts=cv.matFromArray(good.length,1,cv.CV_32FC2,a),dstPts=cv.matFromArray(good.length,1,cv.CV_32FC2,b),mask=new cv.Mat();
+   let H=cv.findHomography(srcPts,dstPts,cv.RANSAC,5,mask);
+   if(!H.empty()){
+    let center=cv.matFromArray(1,1,cv.CV_32FC2,[w/2,h/2]),mapped=new cv.Mat();cv.perspectiveTransform(center,mapped,H);
+    let x=mapped.data32F[0]/$('reference').naturalWidth,y=mapped.data32F[1]/$('reference').naturalHeight;
+    let inliers=cv.countNonZero(mask);
+    if(inliers>=7&&x>=0&&x<=1&&y>=0&&y<=1){
+     $('xval').textContent=x.toFixed(3);$('yval').textContent=y.toFixed(3);$('matches').textContent=inliers;
+     setTrack('● Tracking สำเร็จ');sendPointer(x,y,true);
+    }else lost(good.length);
+    center.delete();mapped.delete();H.delete();
+   }else lost(good.length);
+   srcPts.delete();dstPts.delete();mask.delete();
+  }else lost(good.length);
+  matches.delete();
+ }else lost(0);
+ src.delete();gray.delete();kp.delete();desc.delete();
+}
+function lost(n){$('matches').textContent=n;setTrack('Tracking Lost · ขยับกล้องให้เห็นลายดาวชัดขึ้น');sendPointer(0,0,false)}
+function sendPointer(x,y,tracking){if(ws&&ws.readyState===WebSocket.OPEN)ws.send(JSON.stringify({type:'pointer',x,y,tracking,timestamp:Date.now()}))}
+$('connect').onclick=()=>{try{if(ws)ws.close();ws=new WebSocket($('wsurl').value.trim());$('wsStatus').innerHTML='<i class="status"></i>กำลังเชื่อมต่อ…';
+ ws.onopen=()=>$('wsStatus').innerHTML='<i class="status good"></i>เชื่อมต่อแล้ว';ws.onclose=()=>$('wsStatus').innerHTML='<i class="status bad"></i>ปิดการเชื่อมต่อ';ws.onerror=()=>$('wsStatus').innerHTML='<i class="status bad"></i>เชื่อมต่อผิดพลาด';
+ }catch(e){$('wsStatus').textContent=e.message}};
+setInterval(()=>{$('track').disabled=!cvReady||!camera},500);
+</script>
+</body></html>
