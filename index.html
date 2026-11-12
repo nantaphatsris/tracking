@@ -161,6 +161,8 @@
     src="https://docs.opencv.org/4.x/opencv.js"
     onload="onOpenCvReady();">
   </script>
+  <script src="https://cdn.jsdelivr.net/npm/js-aruco2@2.0.0/src/cv.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/js-aruco2@2.0.0/src/aruco.js"></script>
 </head>
 
 <body>
@@ -187,7 +189,7 @@
 
     <div class="controls">
       <button id="startCamera" disabled>
-        กำลังโหลด OpenCV.js...
+        กำลังโหลดระบบ Marker...
       </button>
       <div id="playerInfo" style="color:#0bf4ec;font-size:13px;text-align:center;">Player: กำลังเชื่อมต่อ...</div>
       <div class="connection-panel">
@@ -204,9 +206,9 @@
     <div id="status">สถานะ: รอโหลด OpenCV.js</div>
 
     <div class="hint">
-      * กรอบสีส้มคือรูปทรงสี่เหลี่ยมที่ตรวจพบ<br>
-      * แตะภายในกรอบที่ต้องการเลือก กรอบจะเปลี่ยนเป็นสีเขียวอมฟ้า<br>
-      * X/Y คือพิกัดจุดเล็งกลางภาพภายในกรอบที่เลือก มีค่าระหว่าง 0.00–1.00
+      * ติด ArUco ID 0, 1, 2, 3 ที่มุมซ้ายบน, ขวาบน, ขวาล่าง และซ้ายล่างของจอ ตามลำดับ<br>
+      * ระบบใช้ Marker ทั้ง 4 จุดคำนวณพื้นที่จอ ไม่ต้องตรวจจับขอบจอ<br>
+      * X/Y คือพิกัดจุดกึ่งกลางภาพบนพื้นที่จอ มีค่าระหว่าง 0.00–1.00
     </div>
   </main>
 
@@ -224,6 +226,8 @@
     let stream = null;
     let isOpenCvReady = false;
     let isProcessing = false;
+    let arucoDetector = null;
+    const REQUIRED_MARKER_IDS = [0, 1, 2, 3];
 
     let selectedPoint = null;
     let selectedQuad = null;
@@ -258,6 +262,7 @@
 
       cv.onRuntimeInitialized = () => {
         isOpenCvReady = true;
+        if (window.AR && AR.Detector) arucoDetector = new AR.Detector();
         status.textContent =
           "สถานะ: OpenCV.js พร้อมทำงาน กดเปิดกล้องได้เลย";
         button.textContent = "เปิดกล้องส่องหา";
@@ -266,6 +271,7 @@
 
       if (cv.Mat) {
         isOpenCvReady = true;
+        if (window.AR && AR.Detector) arucoDetector = new AR.Detector();
         status.textContent =
           "สถานะ: OpenCV.js พร้อมทำงาน กดเปิดกล้องได้เลย";
         button.textContent = "เปิดกล้องส่องหา";
@@ -843,121 +849,51 @@
 
     function processVideo() {
       if (!isProcessing) return;
-
       if (!camera.videoWidth || !camera.videoHeight) {
-        requestAnimationFrame(processVideo);
-        return;
+        requestAnimationFrame(processVideo); return;
       }
-
-      const width = camera.videoWidth;
-      const height = camera.videoHeight;
-
-      if (
-        canvasOutput.width !== width ||
-        canvasOutput.height !== height
-      ) {
-        canvasOutput.width = width;
-        canvasOutput.height = height;
+      if (!arucoDetector && window.AR && AR.Detector) arucoDetector = new AR.Detector();
+      const width = camera.videoWidth, height = camera.videoHeight;
+      if (canvasOutput.width !== width || canvasOutput.height !== height) {
+        canvasOutput.width = width; canvasOutput.height = height;
       }
-
       ctx.drawImage(camera, 0, 0, width, height);
-
-      let srcMat = null;
-
       try {
-        srcMat = cv.imread(canvasOutput);
-
-        const candidates = extractCandidates(
-          srcMat,
-          width,
-          height
-        );
-
-        const chosen = chooseCandidate(candidates);
-
-        if (chosen) {
-          selectedQuad = chosen.points.map(p => ({
-            x: p.x,
-            y: p.y
-          }));
-
-          previousQuadCenter = { ...chosen.center };
-          lostFrames = 0;
-
-          const xy = calculateNormalizedXY(
-            selectedQuad,
-            width,
-            height
-          );
-
+        if (!arucoDetector) throw new Error('ArUco library ยังโหลดไม่เสร็จ');
+        const imageData = ctx.getImageData(0, 0, width, height);
+        const markers = arucoDetector.detect(imageData);
+        const centers = {};
+        markers.forEach(marker => {
+          const c = marker.corners;
+          const center = { x: c.reduce((a,p)=>a+p.x,0)/4, y: c.reduce((a,p)=>a+p.y,0)/4 };
+          centers[marker.id] = center;
+          ctx.strokeStyle = '#0bf4ec'; ctx.lineWidth = 3;
+          ctx.beginPath(); ctx.moveTo(c[0].x,c[0].y);
+          for (let i=1;i<c.length;i++) ctx.lineTo(c[i].x,c[i].y);
+          ctx.closePath(); ctx.stroke();
+          ctx.fillStyle = '#ffcf5a'; ctx.font = 'bold 22px Arial';
+          ctx.fillText(String(marker.id), center.x+8, center.y-8);
+        });
+        const ready = REQUIRED_MARKER_IDS.every(id => centers[id]);
+        if (ready) {
+          const quad = REQUIRED_MARKER_IDS.map(id => centers[id]);
+          ctx.strokeStyle = '#0bf4ec'; ctx.lineWidth = 3;
+          ctx.beginPath(); ctx.moveTo(quad[0].x,quad[0].y);
+          for(let i=1;i<4;i++) ctx.lineTo(quad[i].x,quad[i].y);
+          ctx.closePath(); ctx.stroke();
+          const xy = calculateNormalizedXY(quad, width, height);
           displayCoordinates(xy.x, xy.y, true);
-
-          // ส่งพิกัด X/Y ที่คำนวณได้ไป Node.js → OSC → TouchDesigner
           sendXYToTouchDesigner(xy.x, xy.y);
-
-          status.textContent =
-            "สถานะ: ตรวจพบและติดตามกรอบที่ล็อกไว้แล้ว";
-
-          // เมื่อเลือกแล้ว ซ่อนกรอบอื่นทั้งหมด
-          drawFrameOverlays(
-            srcMat,
-            targetLocked ? [] : candidates,
-            selectedQuad
-          );
-        } else if (targetLocked && selectedQuad) {
-          // ถ้าหากกรอบหาย ให้เก็บตำแหน่งล่าสุดไว้
-          // และค้นหากรอบเดิมต่อไปโดยไม่ปลดล็อก
-          lostFrames++;
-
-          drawOpenCvPolygon(
-            srcMat,
-            selectedQuad,
-            "#0bf4ec",
-            3
-          );
-
-          displayCoordinates(
-            lastGoodXY.x,
-            lastGoodXY.y,
-            true
-          );
-
-          status.textContent =
-            `สถานะ: กรอบถูกล็อกไว้ กำลังค้นหากรอบเดิมอีกครั้ง (${lostFrames} เฟรม)`;
-
-          drawFrameOverlays(
-            srcMat,
-            [],
-            selectedQuad
-          );
+          status.textContent = 'สถานะ: พบ ArUco ครบ 4 จุด กำลัง Tracking';
         } else {
-          lostFrames++;
-
-          displayCoordinates(0, 0, false);
-
-          status.textContent = selectedPoint
-            ? "สถานะ: แตะภายในกรอบที่ต้องการเลือก"
-            : targetLocked
-              ? "สถานะ: ล็อกเป้าหมายแล้ว แต่ยังไม่พบกรอบเดิม กำลังรอติดตามต่อ"
-              : "สถานะ: กำลังค้นหารูปทรงสี่เหลี่ยม...";
-
-          drawFrameOverlays(
-            srcMat,
-            candidates,
-            null
-          );
+          displayCoordinates(lastGoodXY.x, lastGoodXY.y, false);
+          const found = REQUIRED_MARKER_IDS.filter(id => centers[id]).length;
+          status.textContent = `สถานะ: พบ Marker ${found}/4 — ต้องเห็น ID 0, 1, 2, 3 พร้อมกัน`;
         }
-
-        cv.imshow(canvasOutput, srcMat);
       } catch (error) {
-        console.error("OpenCV error:", error);
-
-        status.textContent =
-          "เกิดข้อผิดพลาดในการตรวจจับ ดูรายละเอียดใน Console";
-      } finally {
-        if (srcMat) srcMat.delete();
+        console.error('ArUco tracking error:', error);
+        status.textContent = 'ตรวจจับไม่สำเร็จ: ' + error.message;
       }
-
       requestAnimationFrame(processVideo);
     }
 
@@ -1044,6 +980,8 @@
     // เปิด/ปิดกล้องและส่งสถานะ Active/Inactive
     button.addEventListener("click", async () => {
       if (!isOpenCvReady) return;
+      if (!arucoDetector && window.AR && AR.Detector) arucoDetector = new AR.Detector();
+      if (!arucoDetector) { status.textContent = "ArUco ยังโหลดไม่เสร็จ กรุณารีเฟรชหน้าเว็บ"; return; }
 
       if (stream) {
         isProcessing = false;
@@ -1097,9 +1035,7 @@
 
         button.textContent = "ปิดกล้อง";
 
-        status.textContent = targetLocked
-          ? "สถานะ: กล้องทำงานแล้ว กำลังติดตามกรอบที่ล็อกไว้"
-          : "สถานะ: กล้องทำงานแล้ว แตะภายในกรอบเพื่อเลือกเป้าหมาย";
+        status.textContent = "สถานะ: กล้องทำงานแล้ว กำลังค้นหา ArUco ID 0–3";
 
         requestAnimationFrame(processVideo);
       } catch (error) {
