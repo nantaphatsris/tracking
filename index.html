@@ -1,61 +1,169 @@
 <!doctype html>
-<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#090b20"><title>Star Pointer · Hybrid Tracking</title>
+<html lang="th">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>NIGHT SKY TRACKER V2</title>
 <style>
-:root{color-scheme:dark;--bg:#090b20;--panel:#171a36;--line:#34395f;--accent:#cdaaff;--ok:#80e0b5;--warn:#ffc979;--bad:#ff8498}
-*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% 0%,#29234b,#090b20 65%);color:#f5f1ff;font:15px system-ui,-apple-system,sans-serif}
-main{max-width:980px;margin:auto;padding:18px 14px 38px}.head{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:14px}h1{font-size:21px;margin:0}.sub,.muted{color:#aaa7c7;font-size:12px;line-height:1.55}.tag{border:1px solid var(--line);border-radius:99px;padding:6px 10px;font-size:11px}
-.layout{display:grid;gap:12px}.panel{background:#171a36dd;border:1px solid var(--line);border-radius:16px;padding:14px}.preview{position:relative;background:#050611;border-radius:12px;overflow:hidden;aspect-ratio:4/3}.preview video{width:100%;height:100%;object-fit:cover}.cross{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:38px;height:38px;pointer-events:none}.cross:before,.cross:after{content:"";position:absolute;background:#fff;box-shadow:0 0 8px #cdaaff}.cross:before{width:2px;height:38px;left:18px}.cross:after{height:2px;width:38px;top:18px}.cross i{position:absolute;left:15px;top:15px;width:8px;height:8px;border:1px solid white;border-radius:50%}
-button,input{font:inherit;border-radius:10px;border:1px solid var(--line);padding:11px 12px;background:#0c1028;color:white}button{background:#805db9;border:0;font-weight:650}button.secondary{background:#292c4e;border:1px solid var(--line)}button:disabled{opacity:.4}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}.stat{background:#0c1028;border-radius:10px;padding:10px}.stat small{display:block;color:#aaa7c7;font-size:11px}.stat strong{font-size:18px;font-variant-numeric:tabular-nums}
-input{width:100%;margin:5px 0 10px}label{font-size:12px;color:#c7c2df}.statusdot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#888;margin-right:6px}.ok{background:var(--ok)}.bad{background:var(--bad)}
-.steps{padding-left:19px}.markergrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.markergrid img{width:100%;background:white;border-radius:8px;padding:4px}.markergrid a{color:#d5bdff;font-size:11px;text-align:center;display:block}
-.ref{width:100%;border-radius:10px}.foot{text-align:center;color:#8581a2;font-size:11px;margin:18px 0}
-@media(min-width:720px){.layout{grid-template-columns:1.2fr .8fr}.panel.full{grid-column:1/-1}}
-</style></head><body><main>
-<div class="head"><div><h1>✦ Star Pointer</h1><div class="sub">Hybrid Marker Tracking · QR fiducials + Homography</div></div><span class="tag">DEMO 02</span></div>
-<div class="layout">
-<section class="panel"><b>กล้องมือถือ</b><div class="preview" style="margin-top:10px"><video id="video" autoplay muted playsinline></video><div class="cross"><i></i></div></div>
-<div class="row"><button id="start">เปิดกล้องหลัง</button><button id="stop" class="secondary" disabled>หยุดกล้อง</button><button id="scan" class="secondary" disabled>เริ่ม Tracking</button></div>
-<div class="stats"><div class="stat"><small>X</small><strong id="x">—</strong></div><div class="stat"><small>Y</small><strong id="y">—</strong></div><div class="stat"><small>Marker</small><strong id="marker">—</strong></div></div>
-<p class="muted" id="trackStatus">โหลดตัวอ่าน QR…</p></section>
-<section class="panel"><b>เชื่อมต่อ TouchDesigner</b><p class="muted">เว็บส่งพิกัด normalized 0–1 ผ่าน WebSocket</p>
-<label>WebSocket URL</label><input id="wsurl" value="ws://192.168.1.10:9980" spellcheck="false">
-<div class="row"><button id="connect" class="secondary">เชื่อมต่อ</button><span class="muted" id="wsStatus"><i class="statusdot"></i>ยังไม่เชื่อมต่อ</span></div>
-<p class="muted">เปลี่ยน IP ให้เป็น IP ของคอมพิวเตอร์ที่รัน TouchDesigner และใช้พอร์ตเดียวกับ Server</p></section>
-<section class="panel full"><b>ชุด Marker สำหรับจอ TV</b><p class="muted">เปิด <b>display.html</b> บนอุปกรณ์ที่ต่อ TV เพื่อแสดงภาพดาวพร้อม Marker ทั้ง 4 มุม ห้ามปรับ crop/zoom และให้ภาพเต็มกรอบ</p>
-<div class="markergrid"><div><img src="marker_TL.png"><a href="marker_TL.png" download>ดาวน์โหลด TL</a></div><div><img src="marker_TR.png"><a href="marker_TR.png" download>ดาวน์โหลด TR</a></div><div><img src="marker_BL.png"><a href="marker_BL.png" download>ดาวน์โหลด BL</a></div><div><img src="marker_BR.png"><a href="marker_BR.png" download>ดาวน์โหลด BR</a></div></div>
-<p class="muted">Marker แต่ละตัวมีรหัสเฉพาะและระบุตำแหน่งมุมของจอ ใช้เพียง 1 Marker ก็ประมาณ homography ได้เมื่อทราบขนาดและตำแหน่งของ Marker บนภาพ</p></section>
-<section class="panel full"><b>ภาพอ้างอิง</b><img class="ref" src="reference.jpg" alt="Star artwork"></section>
-</div>
-<section class="panel" style="margin-top:12px"><b>ขั้นตอนใช้งาน</b><ol class="muted steps"><li>เปิด display.html บนจอ TV/คอมพิวเตอร์ที่ต่อ TV</li><li>เปิดเว็บนี้บน iPhone ผ่าน HTTPS แล้วอนุญาตกล้องหลัง</li><li>เล็งกล้องให้เห็น Marker มุมใดมุมหนึ่งของภาพดาว</li><li>กดเริ่ม Tracking แล้วเล็งจุดกึ่งกลางภาพกล้องไปยังจุดที่ต้องการบน artwork</li><li>ดูค่า X/Y และเชื่อม WebSocket เมื่อพร้อมทดสอบ TouchDesigner</li></ol>
-<p class="muted">ข้อจำกัด: ต้องเห็น QR Marker อย่างน้อย 1 ตัวอย่างชัดเจนในภาพกล้อง หากไม่เห็น Marker จะหยุดส่งพิกัดและแสดง Tracking Lost การคำนวณใช้สมมติฐานว่าภาพบน TV เป็นระนาบเดียว</p></section>
-<div class="foot">Prototype · jsQR + projective transform · X/Y normalized 0–1</div>
-</main><canvas id="canvas" hidden></canvas>
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#050714;color:#eef2ff;font:15px system-ui,-apple-system,sans-serif}
+header{padding:14px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #222944}
+h1{font-size:16px;letter-spacing:.12em;margin:0}.pill{font-size:11px;border:1px solid #3b4668;border-radius:99px;padding:5px 9px;color:#a9b7dc}
+main{max-width:900px;margin:auto;padding:14px;display:grid;gap:12px}
+.preview{position:relative;background:#000;border:1px solid #344064;border-radius:16px;overflow:hidden;aspect-ratio:4/3}
+video,canvas#overlay{position:absolute;width:100%;height:100%;inset:0;object-fit:contain}
+canvas#overlay{pointer-events:none}
+.cross{position:absolute;left:50%;top:50%;width:30px;height:30px;transform:translate(-50%,-50%);pointer-events:none}
+.cross:before,.cross:after{content:"";position:absolute;background:#5df5d0;box-shadow:0 0 9px #5df5d0}
+.cross:before{width:30px;height:2px;top:14px}.cross:after{height:30px;width:2px;left:14px}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+button{background:#172343;color:#fff;border:1px solid #42527e;border-radius:12px;padding:12px 15px;font-weight:650}
+button.primary{background:#4a3db0;border-color:#7669ef;flex:1}
+button:disabled{opacity:.45}
+.panel{background:#0c1227;border:1px solid #252f50;border-radius:14px;padding:13px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.stat{background:#080d1d;border-radius:10px;padding:9px}.stat small{display:block;color:#8fa0c9;font-size:10px}.stat b{font-size:19px;font-variant-numeric:tabular-nums}
+.status{font-size:13px;color:#9db0dc;line-height:1.5}.good{color:#66f0c6}.warn{color:#ffd27b}.bad{color:#ff8c9c}
+label{font-size:12px;color:#a9b7dc}input{width:100%;background:#070c1b;color:white;border:1px solid #354266;padding:10px;border-radius:9px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media(max-width:520px){.stats{grid-template-columns:repeat(2,1fr)}header{padding:12px}.preview{aspect-ratio:3/4}}
+</style>
+</head>
+<body>
+<header><h1>✳ NIGHT SKY TRACKER</h1><span class="pill">CONTINUOUS FLOW · V2</span></header>
+<main>
+ <div class="preview"><video id="video" playsinline muted></video><canvas id="overlay"></canvas><div class="cross"></div></div>
+ <div class="actions">
+  <button class="primary" id="start">เปิดกล้องและเริ่ม Tracking</button>
+  <button id="stop" disabled>หยุด</button>
+  <button id="calib">ค้นหา Marker ใหม่</button>
+ </div>
+ <section class="panel">
+  <div class="stats">
+   <div class="stat"><small>SCREEN X</small><b id="x">0.000</b></div>
+   <div class="stat"><small>SCREEN Y</small><b id="y">0.000</b></div>
+   <div class="stat"><small>TRACKED POINTS</small><b id="points">0</b></div>
+   <div class="stat"><small>FPS</small><b id="fps">0</b></div>
+  </div>
+  <p class="status" id="status">พร้อมเริ่มต้น · วางโทรศัพท์ให้เห็น Marker บนขอบจออย่างน้อย 1 จุด</p>
+ </section>
+ <section class="panel">
+  <label>WebSocket URL (ถ้ายังไม่เชื่อม TouchDesigner เว้นว่างได้)</label>
+  <input id="wsurl" placeholder="ws://192.168.1.10:9980">
+  <p class="status" id="wsstatus">WebSocket: ยังไม่เชื่อมต่อ</p>
+ </section>
+ <p class="status">แนวทาง: QR Marker ใช้ตั้งค่าพิกัดเริ่มต้นและแก้ Drift เป็นระยะ ส่วน Lucas–Kanade Optical Flow จะติดตามมุม Marker ต่อเนื่องระหว่างการสแกนใหม่</p>
+</main>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script async src="https://docs.opencv.org/4.x/opencv.js" onload="window.cvReady=true"></script>
 <script>
-const $=id=>document.getElementById(id);let stream=null,active=false,ws=null,lastSend=0;
-const names={STAR_POINTER_TL_V1:"TL",STAR_POINTER_TR_V1:"TR",STAR_POINTER_BL_V1:"BL",STAR_POINTER_BR_V1:"BR"};
-// Marker geometry in normalized coordinates, matching display.html
-const mSize=.085, margin=.022;
-function targetFor(id){let x=id.endsWith("L")?margin:1-margin-mSize,y=id.startsWith("T")?margin:1-margin-mSize;return [[x,y],[x+mSize,y],[x+mSize,y+mSize],[x,y+mSize]]}
-$("start").onclick=async()=>{try{stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:"environment"},width:{ideal:1280},height:{ideal:720}}});$("video").srcObject=stream;await $("video").play();$("stop").disabled=false;$("scan").disabled=false;$("trackStatus").textContent="กล้องพร้อม · จัด Marker ให้อยู่ในภาพ";}catch(e){$("trackStatus").textContent="เปิดกล้องไม่ได้: "+e.message}};
-$("stop").onclick=()=>{active=false;if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;$("video").srcObject=null;$("stop").disabled=true;$("scan").disabled=true;$("trackStatus").textContent="หยุดกล้องแล้ว"};
-$("scan").onclick=()=>{active=!active;$("scan").textContent=active?"หยุด Tracking":"เริ่ม Tracking";if(active)tick()};
-function tick(){if(!active)return;requestAnimationFrame(tick);const v=$("video");if(v.readyState<2||!window.jsQR)return;const c=$("canvas"),max=900,s=Math.min(1,max/v.videoWidth);c.width=Math.round(v.videoWidth*s);c.height=Math.round(v.videoHeight*s);const ctx=c.getContext("2d",{willReadFrequently:true});ctx.drawImage(v,0,0,c.width,c.height);const data=ctx.getImageData(0,0,c.width,c.height);const code=jsQR(data.data,data.width,data.height,{inversionAttempts:"attemptBoth"});
-if(!code){lost();return}const id=names[code.data];if(!id){lost();return}
-const loc=code.location;const observed=[loc.topLeftCorner,loc.topRightCorner,loc.bottomRightCorner,loc.bottomLeftCorner];
-const target=targetFor(id);const H=homography(observed,target);if(!H){lost();return}
-const px=c.width/2,py=c.height/2,den=H[6]*px+H[7]*py+1;const x=(H[0]*px+H[1]*py+H[2])/den,y=(H[3]*px+H[4]*py+H[5])/den;
-if(!Number.isFinite(x)||!Number.isFinite(y)||x<0||x>1||y<0||y>1){lost();return}
-$("x").textContent=x.toFixed(3);$("y").textContent=y.toFixed(3);$("marker").textContent=id;$("trackStatus").textContent="● Tracking สำเร็จ · Marker "+id;send(x,y,true,id);
+const video=document.getElementById('video'), overlay=document.getElementById('overlay'), ctx=overlay.getContext('2d');
+const scan=document.createElement('canvas'), sctx=scan.getContext('2d',{willReadFrequently:true});
+const statusEl=document.getElementById('status');
+let stream=null,running=false,prevGray=null,prevPts=null,pointMap=[],lastScan=0,lastFrame=0,frames=0,fpsAt=0,ws=null,homography=null;
+const STAGE={w:1600,h:900};
+const MARKERS={
+ NST_TL:[[12,12],[100,12],[100,100],[12,100]],
+ NST_TR:[[1500,12],[1588,12],[1588,100],[1500,100]],
+ NST_BL:[[12,800],[100,800],[100,888],[12,888]],
+ NST_BR:[[1500,800],[1588,800],[1588,888],[1500,888]]
+};
+function setStatus(t,cls=''){statusEl.className='status '+cls;statusEl.textContent=t}
+function cvOK(){return window.cv&&cv.Mat&&cv.calcOpticalFlowPyrLK}
+function fitCanvas(){if(video.videoWidth){overlay.width=video.videoWidth;overlay.height=video.videoHeight}}
+function scanQR(){
+ if(!window.jsQR||!video.videoWidth)return [];
+ const W=video.videoWidth,H=video.videoHeight; scan.width=W;scan.height=H;sctx.drawImage(video,0,0,W,H);
+ const found=new Map();
+ // overlapping tiles: jsQR returns one code per call; overlap helps find several codes in one frame.
+ const tiles=[[0,0,.58,.58],[.42,0,.58,.58],[0,.42,.58,.58],[.42,.42,.58,.58],[.21,.21,.58,.58]];
+ for(const [rx,ry,rw,rh] of tiles){
+  const x=Math.round(rx*W),y=Math.round(ry*H),w=Math.round(rw*W),h=Math.round(rh*H);
+  const im=sctx.getImageData(x,y,w,h),code=jsQR(im.data,w,h,{inversionAttempts:"attemptBoth"});
+  if(!code||!MARKERS[code.data]||found.has(code.data))continue;
+  const loc=code.location, names=['topLeftCorner','topRightCorner','bottomRightCorner','bottomLeftCorner'];
+  const corners=names.map(n=>({x:loc[n].x+x,y:loc[n].y+y}));
+  found.set(code.data,{corners,world:MARKERS[code.data]});
+ }
+ return [...found.entries()];
 }
-function lost(){$("trackStatus").textContent="Tracking Lost · หันกล้องให้เห็น Marker ชัดเจน";$("marker").textContent="—";send(0,0,false,null)}
-// Solve 8 unknowns of a planar homography from four point pairs by Gaussian elimination.
-function homography(src,dst){let A=[],b=[];for(let i=0;i<4;i++){let [x,y]=[src[i].x,src[i].y], [u,v]=dst[i];A.push([x,y,1,0,0,0,-u*x,-u*y]);b.push(u);A.push([0,0,0,x,y,1,-v*x,-v*y]);b.push(v)}
-for(let i=0;i<8;i++){let p=i;for(let r=i+1;r<8;r++)if(Math.abs(A[r][i])>Math.abs(A[p][i]))p=r;if(Math.abs(A[p][i])<1e-9)return null;[A[i],A[p]]=[A[p],A[i]];[b[i],b[p]]=[b[p],b[i]];let d=A[i][i];for(let j=i;j<8;j++)A[i][j]/=d;b[i]/=d;for(let r=0;r<8;r++)if(r!==i){let f=A[r][i];for(let j=i;j<8;j++)A[r][j]-=f*A[i][j];b[r]-=f*b[i]}}
-return [...b,1]}
-function send(x,y,tracking,marker){if(ws&&ws.readyState===1){let now=Date.now();if(now-lastSend>40){ws.send(JSON.stringify({type:"pointer",x,y,tracking,marker,timestamp:now}));lastSend=now}}}
-$("connect").onclick=()=>{try{if(ws)ws.close();ws=new WebSocket($("wsurl").value.trim());$("wsStatus").innerHTML='<i class="statusdot"></i>กำลังเชื่อมต่อ';ws.onopen=()=>$("wsStatus").innerHTML='<i class="statusdot ok"></i>เชื่อมต่อแล้ว';ws.onclose=()=>$("wsStatus").innerHTML='<i class="statusdot bad"></i>ตัดการเชื่อมต่อ';ws.onerror=()=>$("wsStatus").innerHTML='<i class="statusdot bad"></i>เชื่อมต่อผิดพลาด'}catch(e){$("wsStatus").textContent=e.message}};
-setTimeout(()=>{if(window.jsQR)$("trackStatus").textContent="ตัวอ่าน QR พร้อม · เปิดกล้องเพื่อเริ่ม";else $("trackStatus").textContent="โหลด jsQR ไม่สำเร็จ · ตรวจสอบอินเทอร์เน็ต"},1800);
-</script></body></html>
+function mergeDetections(dets){
+ const byId=new Map(dets);
+ const pts=[],world=[];
+ for(const [id,d] of byId){
+  d.corners.forEach((p,i)=>{pts.push(p.x,p.y);world.push(...d.world[i]);});
+ }
+ if(pts.length>=8){
+  pointMap=world;
+  prevPts=cv.matFromArray(pts.length/2,1,cv.CV_32FC2,pts);
+  setStatus(`Calibrate สำเร็จ · พบ Marker ${dets.length} จุด · เริ่ม Optical Flow ต่อเนื่อง`,'good');
+ }
+}
+function detectAndMerge(){const d=scanQR();if(d.length)mergeDetections(d);return d.length}
+function makeGray(){
+ const src=cv.imread(video),gray=new cv.Mat();cv.cvtColor(src,gray,cv.COLOR_RGBA2GRAY);src.delete();return gray;
+}
+function trackFrame(){
+ if(!running)return;
+ if(!cvOK()||!video.videoWidth){requestAnimationFrame(trackFrame);return;}
+ fitCanvas();
+ let gray=makeGray();
+ if(prevGray&&prevPts&&prevPts.rows>=4){
+  const nextPts=new cv.Mat(),status=new cv.Mat(),err=new cv.Mat();
+  cv.calcOpticalFlowPyrLK(prevGray,gray,prevPts,nextPts,status,err,new cv.Size(21,21),3,
+    new cv.TermCriteria(cv.TERM_CRITERIA_EPS|cv.TERM_CRITERIA_COUNT,20,.03),0,1e-4);
+  const src=[],dst=[],kept=[],keptWorld=[];
+  for(let i=0;i<nextPts.rows;i++){
+   if(status.data[i]===1){const x=nextPts.data32F[i*2],y=nextPts.data32F[i*2+1];
+    if(Number.isFinite(x)&&Number.isFinite(y)){src.push(x,y);dst.push(pointMap[i*2],pointMap[i*2+1]);kept.push(x,y);keptWorld.push(pointMap[i*2],pointMap[i*2+1]);}
+   }
+  }
+  if(src.length>=8){
+   const srcMat=cv.matFromArray(src.length/2,1,cv.CV_32FC2,src),dstMat=cv.matFromArray(dst.length/2,1,cv.CV_32FC2,dst);
+   const mask=new cv.Mat();homography=cv.findHomography(srcMat,dstMat,cv.RANSAC,4,mask);
+   let inliers=0;for(let i=0;i<mask.rows;i++)if(mask.data[i])inliers++;
+   document.getElementById('points').textContent=inliers;
+   if(homography&&!homography.empty()){
+    const center=cv.matFromArray(1,1,cv.CV_32FC2,[video.videoWidth/2,video.videoHeight/2]),out=new cv.Mat();
+    cv.perspectiveTransform(center,out,homography);
+    const sx=out.data32F[0]/STAGE.w,sy=out.data32F[1]/STAGE.h;
+    // map stage to actual artwork inner area (x=110..1490, y=110..790)
+    const ax=(sx*STAGE.w-110)/1380,ay=(sy*STAGE.h-110)/680;
+    if(ax>=0&&ax<=1&&ay>=0&&ay<=1){
+     document.getElementById('x').textContent=ax.toFixed(3);document.getElementById('y').textContent=ay.toFixed(3);
+     setStatus(`TRACKING LIVE · ${inliers} จุด · พิกัดภายใน Artwork`,'good');
+     send({type:'pointer',x:ax,y:ay,tracking:true,points:inliers,timestamp:Date.now()});
+    } else {setStatus('จุดเล็งอยู่นอกพื้นที่กราฟิก','warn');send({type:'pointer',tracking:false,timestamp:Date.now()})}
+    center.delete();out.delete();
+   }
+   srcMat.delete();dstMat.delete();mask.delete();
+   prevPts.delete();prevPts=cv.matFromArray(kept.length/2,1,cv.CV_32FC2,kept);pointMap=keptWorld;
+  }else{
+   setStatus('Optical Flow หลุด · กำลังค้นหา Marker ใหม่','warn');
+   prevPts.delete();prevPts=null;send({type:'pointer',tracking:false,timestamp:Date.now()});
+  }
+  nextPts.delete();status.delete();err.delete();
+ }
+ if(prevGray)prevGray.delete();prevGray=gray;
+ const now=performance.now();
+ if(now-lastScan>450){lastScan=now;const n=detectAndMerge();if(n)setStatus(`พบ Marker ${n} จุด · อัปเดตจุดอ้างอิงแล้ว`,'good')}
+ frames++;if(now-fpsAt>1000){document.getElementById('fps').textContent=frames;frames=0;fpsAt=now}
+ // draw diagnostics overlay
+ ctx.clearRect(0,0,overlay.width,overlay.height);
+ if(prevPts){ctx.fillStyle='#60f5cf';for(let i=0;i<prevPts.rows;i++){const x=prevPts.data32F[i*2],y=prevPts.data32F[i*2+1];ctx.beginPath();ctx.arc(x,y,3,0,Math.PI*2);ctx.fill()}}
+ requestAnimationFrame(trackFrame);
+}
+function send(obj){if(ws&&ws.readyState===1)ws.send(JSON.stringify(obj))}
+document.getElementById('start').onclick=async()=>{
+ try{
+  if(!cvOK()){setStatus('กำลังโหลด OpenCV.js หรือโหลดไม่สำเร็จ รอสักครู่แล้วลองใหม่','warn');return}
+  stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}},audio:false});
+  video.srcObject=stream;await video.play();running=true;document.getElementById('start').disabled=true;document.getElementById('stop').disabled=false;
+  if(prevGray)prevGray.delete();if(prevPts)prevPts.delete();prevGray=null;prevPts=null;pointMap=[];
+  detectAndMerge();if(!prevPts)setStatus('ยังไม่พบ Marker · เล็งไปที่ขอบจอที่มี QR อย่างน้อยหนึ่งอัน','warn');
+  const url=document.getElementById('wsurl').value.trim();if(url){try{ws=new WebSocket(url);ws.onopen=()=>document.getElementById('wsstatus').textContent='WebSocket: เชื่อมต่อแล้ว';ws.onclose=()=>document.getElementById('wsstatus').textContent='WebSocket: ปิดการเชื่อมต่อ';ws.onerror=()=>document.getElementById('wsstatus').textContent='WebSocket: เกิดข้อผิดพลาด'}catch(e){}}
+  requestAnimationFrame(trackFrame);
+ }catch(e){setStatus('เปิดกล้องไม่สำเร็จ: '+e.message,'bad')}
+};
+document.getElementById('stop').onclick=()=>{running=false;if(stream)stream.getTracks().forEach(t=>t.stop());video.srcObject=null;document.getElementById('start').disabled=false;document.getElementById('stop').disabled=true;if(prevGray)prevGray.delete();if(prevPts)prevPts.delete();prevGray=null;prevPts=null;setStatus('หยุด Tracking แล้ว')};
+document.getElementById('calib').onclick=()=>{if(cvOK()&&video.videoWidth){const n=detectAndMerge();setStatus(n?`อัปเดต Marker ${n} จุดแล้ว`:'ยังไม่พบ Marker ที่รู้จัก',n?'good':'warn')}};
+</script>
+</body></html>
