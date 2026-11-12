@@ -1,169 +1,260 @@
 <!doctype html>
 <html lang="th">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>NIGHT SKY TRACKER V2</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>SkyTracker V2 — Bezel Marker Tracking</title>
 <style>
-:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#050714;color:#eef2ff;font:15px system-ui,-apple-system,sans-serif}
-header{padding:14px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #222944}
-h1{font-size:16px;letter-spacing:.12em;margin:0}.pill{font-size:11px;border:1px solid #3b4668;border-radius:99px;padding:5px 9px;color:#a9b7dc}
-main{max-width:900px;margin:auto;padding:14px;display:grid;gap:12px}
-.preview{position:relative;background:#000;border:1px solid #344064;border-radius:16px;overflow:hidden;aspect-ratio:4/3}
-video,canvas#overlay{position:absolute;width:100%;height:100%;inset:0;object-fit:contain}
-canvas#overlay{pointer-events:none}
-.cross{position:absolute;left:50%;top:50%;width:30px;height:30px;transform:translate(-50%,-50%);pointer-events:none}
-.cross:before,.cross:after{content:"";position:absolute;background:#5df5d0;box-shadow:0 0 9px #5df5d0}
-.cross:before{width:30px;height:2px;top:14px}.cross:after{height:30px;width:2px;left:14px}
-.actions{display:flex;gap:8px;flex-wrap:wrap}
-button{background:#172343;color:#fff;border:1px solid #42527e;border-radius:12px;padding:12px 15px;font-weight:650}
-button.primary{background:#4a3db0;border-color:#7669ef;flex:1}
-button:disabled{opacity:.45}
-.panel{background:#0c1227;border:1px solid #252f50;border-radius:14px;padding:13px}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-.stat{background:#080d1d;border-radius:10px;padding:9px}.stat small{display:block;color:#8fa0c9;font-size:10px}.stat b{font-size:19px;font-variant-numeric:tabular-nums}
-.status{font-size:13px;color:#9db0dc;line-height:1.5}.good{color:#66f0c6}.warn{color:#ffd27b}.bad{color:#ff8c9c}
-label{font-size:12px;color:#a9b7dc}input{width:100%;background:#070c1b;color:white;border:1px solid #354266;padding:10px;border-radius:9px}
-.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-@media(max-width:520px){.stats{grid-template-columns:repeat(2,1fr)}header{padding:12px}.preview{aspect-ratio:3/4}}
+:root{color-scheme:dark;--bg:#080d14;--panel:#111b27;--line:#26384b;--cyan:#14e5dc;--muted:#91a4b8;--green:#57e39b;--orange:#ffb547}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#edf5fb;font:15px/1.5 system-ui,-apple-system,sans-serif}
+header{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}
+h1{font-size:18px;margin:0}header small{color:var(--muted)}
+main{max-width:1050px;margin:auto;padding:16px;display:grid;grid-template-columns:minmax(0,1.3fr) minmax(280px,.7fr);gap:14px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;min-width:0}
+.camera{position:relative;background:#020509;border-radius:10px;overflow:hidden;aspect-ratio:3/4;max-height:70vh;display:grid;place-items:center}
+video{display:none}canvas{width:100%;height:100%;object-fit:contain}
+.overlay{position:absolute;inset:0;pointer-events:none}
+.cross{position:absolute;left:50%;top:50%;width:24px;height:24px;transform:translate(-50%,-50%);border:2px solid var(--cyan);border-radius:50%;box-shadow:0 0 12px #14e5dc88}
+.cross:after{content:"";position:absolute;left:50%;top:50%;width:4px;height:4px;background:var(--cyan);border-radius:50%;transform:translate(-50%,-50%)}
+.readout{position:absolute;left:10px;bottom:10px;background:#020a12dd;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:13px/1.7 ui-monospace,monospace;color:var(--cyan)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.stack{display:grid;gap:10px}.metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.metric{background:#09121d;border:1px solid var(--line);border-radius:9px;padding:10px}.metric b{display:block;font-size:22px;color:var(--cyan);font-family:ui-monospace,monospace}
+button,input,select{font:inherit;border-radius:8px;border:1px solid var(--line);padding:10px;background:#09121d;color:#edf5fb}
+button{background:var(--cyan);color:#061316;font-weight:700;border:0;cursor:pointer}button.secondary{background:#1b2b3c;color:#edf5fb;border:1px solid var(--line)}button:disabled{opacity:.45;cursor:not-allowed}
+label{display:grid;gap:4px;color:var(--muted);font-size:13px}input{width:100%;min-width:0}
+h2{font-size:15px;margin:0 0 10px}.muted{color:var(--muted);font-size:13px}.status{padding:9px 10px;background:#09121d;border:1px solid var(--line);border-radius:8px;color:var(--muted);font-size:13px}
+.good{color:var(--green)}.warn{color:var(--orange)}.bad{color:#ff7777}
+hr{border:0;border-top:1px solid var(--line);margin:14px 0}
+.marker-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.marker-card{background:#09121d;border:1px solid var(--line);border-radius:9px;padding:8px;text-align:center}.marker-card svg{width:100%;max-width:110px;height:auto;background:white;padding:5px}
+.marker-card small{display:block;color:var(--muted)}
+footer{max-width:1050px;margin:0 auto;padding:0 16px 24px;color:var(--muted);font-size:12px}
+@media(max-width:760px){main{grid-template-columns:1fr;padding:10px}.camera{max-height:58vh}header{padding:12px} }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/js-aruco2@2.0.0/src/aruco.min.js"></script>
 </head>
 <body>
-<header><h1>✳ NIGHT SKY TRACKER</h1><span class="pill">CONTINUOUS FLOW · V2</span></header>
+<header><div><h1>✳ SKYTRACKER V2</h1><small>Bezel Marker · Live XY · WebSocket / OSC bridge</small></div><small id="libState">กำลังโหลด Marker Engine…</small></header>
 <main>
- <div class="preview"><video id="video" playsinline muted></video><canvas id="overlay"></canvas><div class="cross"></div></div>
- <div class="actions">
-  <button class="primary" id="start">เปิดกล้องและเริ่ม Tracking</button>
-  <button id="stop" disabled>หยุด</button>
-  <button id="calib">ค้นหา Marker ใหม่</button>
- </div>
- <section class="panel">
-  <div class="stats">
-   <div class="stat"><small>SCREEN X</small><b id="x">0.000</b></div>
-   <div class="stat"><small>SCREEN Y</small><b id="y">0.000</b></div>
-   <div class="stat"><small>TRACKED POINTS</small><b id="points">0</b></div>
-   <div class="stat"><small>FPS</small><b id="fps">0</b></div>
+<section class="panel stack">
+  <div class="camera" id="cameraBox">
+    <video id="video" autoplay playsinline muted></video>
+    <canvas id="view"></canvas>
+    <div class="overlay"><div class="cross"></div><div class="readout">
+      TRACK: <b id="trackState" class="warn">WAIT</b><br>
+      X: <b id="xVal">0.000</b><br>Y: <b id="yVal">0.000</b><br>
+      MARKERS: <b id="markerCount">0</b>
+    </div></div>
   </div>
-  <p class="status" id="status">พร้อมเริ่มต้น · วางโทรศัพท์ให้เห็น Marker บนขอบจออย่างน้อย 1 จุด</p>
- </section>
- <section class="panel">
-  <label>WebSocket URL (ถ้ายังไม่เชื่อม TouchDesigner เว้นว่างได้)</label>
-  <input id="wsurl" placeholder="ws://192.168.1.10:9980">
-  <p class="status" id="wsstatus">WebSocket: ยังไม่เชื่อมต่อ</p>
- </section>
- <p class="status">แนวทาง: QR Marker ใช้ตั้งค่าพิกัดเริ่มต้นและแก้ Drift เป็นระยะ ส่วน Lucas–Kanade Optical Flow จะติดตามมุม Marker ต่อเนื่องระหว่างการสแกนใหม่</p>
+  <div class="row">
+    <button id="cameraBtn" disabled>กำลังโหลดระบบ…</button>
+    <button id="printBtn" class="secondary">สร้างแผ่น Marker</button>
+  </div>
+  <div id="status" class="status">สถานะ: โหลดตัวตรวจจับ Marker</div>
+  <div class="metrics">
+    <div class="metric"><span class="muted">Marker IDs ที่พบ</span><b id="ids">—</b></div>
+    <div class="metric"><span class="muted">WebSocket</span><b id="wsState" style="font-size:16px">CONNECTING</b></div>
+  </div>
+  <p class="muted">กล้องใช้จุดกึ่งกลางภาพเป็นแนวเล็ง (crosshair) แล้วคำนวณจุดตัดบนระนาบ TV ไม่ได้ใช้ขอบจอเป็นกรอบตรวจจับ</p>
+</section>
+
+<aside class="panel stack">
+  <div><h2>1. ตั้งค่าขนาดจอและ Marker</h2><p class="muted">วัดพื้นที่ภาพของ TV เป็นมิลลิเมตร ไม่รวมขอบพลาสติก</p></div>
+  <div class="row">
+    <label style="flex:1">ความกว้างจอ (mm)<input id="screenW" type="number" min="100" value="1600"></label>
+    <label style="flex:1">ความสูงจอ (mm)<input id="screenH" type="number" min="100" value="900"></label>
+  </div>
+  <label>ขนาด Marker (mm)<input id="markerSize" type="number" min="20" value="50"></label>
+  <p class="muted">ตำแหน่ง X/Y คือจุดกึ่งกลาง Marker เทียบกับมุมซ้ายบนของพื้นที่ภาพ TV (หน่วย mm) ค่าติดลบหมายถึงอยู่บน Bezel นอกพื้นที่ภาพ</p>
+  <div class="marker-grid" id="markerList"></div>
+  <button id="applyBtn" class="secondary">ใช้ตำแหน่ง Marker เหล่านี้</button>
+  <hr>
+  <h2>2. WebSocket → Node.js → OSC</h2>
+  <label>WebSocket URL<input id="wsUrl" value="wss://inclusion-judge-roger-indexed.trycloudflare.com" placeholder="wss://your-tunnel.example"></label>
+  <div class="row"><button id="reconnectBtn" class="secondary">เชื่อมต่อใหม่</button><span class="muted">ส่ง {type:"xy", x, y} ทุก 50 ms</span></div>
+  <hr>
+  <h2>3. การทำงานของ Tracking</h2>
+  <div class="status">TRACKING: พบ Marker และคำนวณ XY จริง</div>
+  <div class="status">LOST: ไม่พบ Marker — ไม่ส่งค่าเก่าซ้ำ</div>
+  <p class="muted">รุ่นทดลองนี้ใช้ Homography จากมุม Marker ที่ตรวจพบอย่างน้อย 1 ตัว หากเห็นหลายตัวจะรวมจุดเพื่อเพิ่มความเสถียร</p>
+</aside>
 </main>
-<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
-<script async src="https://docs.opencv.org/4.x/opencv.js" onload="window.cvReady=true"></script>
+<section class="panel" style="max-width:1050px;margin:0 auto 14px">
+<h2>แผ่น Marker สำหรับพิมพ์</h2>
+<p class="muted">พิมพ์ขนาดจริง 100% ห้ามเลือก Fit to page และวัดด้านนอกของสี่เหลี่ยม Marker ให้ตรงกับค่าขนาดที่ตั้งไว้</p>
+<div id="printSheet" class="marker-grid"></div>
+</section>
+<footer>Prototype V2 · ใช้ HTTPS บน iPhone เพื่ออนุญาตกล้อง · ตรวจสอบการวาง Marker และ Calibration ก่อนใช้จริงกับ TouchDesigner</footer>
+
 <script>
-const video=document.getElementById('video'), overlay=document.getElementById('overlay'), ctx=overlay.getContext('2d');
-const scan=document.createElement('canvas'), sctx=scan.getContext('2d',{willReadFrequently:true});
-const statusEl=document.getElementById('status');
-let stream=null,running=false,prevGray=null,prevPts=null,pointMap=[],lastScan=0,lastFrame=0,frames=0,fpsAt=0,ws=null,homography=null;
-const STAGE={w:1600,h:900};
-const MARKERS={
- NST_TL:[[12,12],[100,12],[100,100],[12,100]],
- NST_TR:[[1500,12],[1588,12],[1588,100],[1500,100]],
- NST_BL:[[12,800],[100,800],[100,888],[12,888]],
- NST_BR:[[1500,800],[1588,800],[1588,888],[1500,888]]
-};
-function setStatus(t,cls=''){statusEl.className='status '+cls;statusEl.textContent=t}
-function cvOK(){return window.cv&&cv.Mat&&cv.calcOpticalFlowPyrLK}
-function fitCanvas(){if(video.videoWidth){overlay.width=video.videoWidth;overlay.height=video.videoHeight}}
-function scanQR(){
- if(!window.jsQR||!video.videoWidth)return [];
- const W=video.videoWidth,H=video.videoHeight; scan.width=W;scan.height=H;sctx.drawImage(video,0,0,W,H);
- const found=new Map();
- // overlapping tiles: jsQR returns one code per call; overlap helps find several codes in one frame.
- const tiles=[[0,0,.58,.58],[.42,0,.58,.58],[0,.42,.58,.58],[.42,.42,.58,.58],[.21,.21,.58,.58]];
- for(const [rx,ry,rw,rh] of tiles){
-  const x=Math.round(rx*W),y=Math.round(ry*H),w=Math.round(rw*W),h=Math.round(rh*H);
-  const im=sctx.getImageData(x,y,w,h),code=jsQR(im.data,w,h,{inversionAttempts:"attemptBoth"});
-  if(!code||!MARKERS[code.data]||found.has(code.data))continue;
-  const loc=code.location, names=['topLeftCorner','topRightCorner','bottomRightCorner','bottomLeftCorner'];
-  const corners=names.map(n=>({x:loc[n].x+x,y:loc[n].y+y}));
-  found.set(code.data,{corners,world:MARKERS[code.data]});
- }
- return [...found.entries()];
+(() => {
+const $ = id => document.getElementById(id);
+const video=$("video"), view=$("view"), vctx=view.getContext("2d");
+const work=document.createElement("canvas"), wctx=work.getContext("2d",{willReadFrequently:true});
+let detector=null, stream=null, running=false, raf=0, socket=null, lastSend=0, lastGood=null;
+let config={screenW:1600,screenH:900,markerSize:50,markers:[
+ {id:0,x:35,y:-28},{id:1,x:1565,y:-28},{id:2,x:-28,y:450},{id:3,x:1628,y:450}
+]};
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function setStatus(msg,cls=""){ $("status").textContent="สถานะ: "+msg; $("status").className="status "+cls; }
+function updateXY(x,y,found){
+ $("xVal").textContent=x.toFixed(3); $("yVal").textContent=y.toFixed(3);
+ $("trackState").textContent=found?"TRACKING":"LOST";
+ $("trackState").className=found?"good":"bad";
 }
-function mergeDetections(dets){
- const byId=new Map(dets);
- const pts=[],world=[];
- for(const [id,d] of byId){
-  d.corners.forEach((p,i)=>{pts.push(p.x,p.y);world.push(...d.world[i]);});
- }
- if(pts.length>=8){
-  pointMap=world;
-  prevPts=cv.matFromArray(pts.length/2,1,cv.CV_32FC2,pts);
-  setStatus(`Calibrate สำเร็จ · พบ Marker ${dets.length} จุด · เริ่ม Optical Flow ต่อเนื่อง`,'good');
- }
+function renderMarkerInputs(){
+ $("markerList").innerHTML="";
+ config.markers.forEach((m,i)=>{
+  const card=document.createElement("div");card.className="marker-card";
+  card.innerHTML=`<b>ID ${m.id}</b><div class="row" style="margin-top:6px"><label style="flex:1">X mm<input data-i="${i}" data-k="x" type="number" value="${m.x}"></label><label style="flex:1">Y mm<input data-i="${i}" data-k="y" type="number" value="${m.y}"></label></div>`;
+  $("markerList").appendChild(card);
+ });
 }
-function detectAndMerge(){const d=scanQR();if(d.length)mergeDetections(d);return d.length}
-function makeGray(){
- const src=cv.imread(video),gray=new cv.Mat();cv.cvtColor(src,gray,cv.COLOR_RGBA2GRAY);src.delete();return gray;
+function collectConfig(){
+ config.screenW=Number($("screenW").value);config.screenH=Number($("screenH").value);config.markerSize=Number($("markerSize").value);
+ document.querySelectorAll("#markerList input").forEach(el=>config.markers[Number(el.dataset.i)][el.dataset.k]=Number(el.value));
 }
-function trackFrame(){
+$("applyBtn").onclick=()=>{collectConfig();setStatus("อัปเดตตำแหน่ง Marker แล้ว — ติดตั้งให้ตรงกับค่าที่กำหนด","good");};
+function generateMarkers(){
+ const out=$("printSheet");out.innerHTML="";
+ if(!window.AR?.Dictionary){out.textContent="Marker Engine ยังโหลดไม่เสร็จ";return;}
+ const dict=new AR.Dictionary("ARUCO");
+ config.markers.forEach(m=>{
+  const card=document.createElement("div");card.className="marker-card";
+  const holder=document.createElement("div");holder.innerHTML=dict.generateSVG(m.id);
+  const svg=holder.querySelector("svg");if(svg){svg.setAttribute("role","img");}
+  card.appendChild(holder);
+  const t=document.createElement("b");t.textContent="ARUCO ID "+m.id;card.appendChild(t);
+  const sm=document.createElement("small");sm.textContent="ตั้งขนาดด้านนอก "+config.markerSize+" mm";card.appendChild(sm);
+  out.appendChild(card);
+ });
+}
+$("printBtn").onclick=()=>{collectConfig();generateMarkers();$("printSheet").scrollIntoView({behavior:"smooth"});};
+function solveLinear(A,b){
+ const n=b.length;A=A.map((r,i)=>r.slice().concat([b[i]]));
+ for(let i=0;i<n;i++){
+  let p=i;for(let r=i+1;r<n;r++)if(Math.abs(A[r][i])>Math.abs(A[p][i]))p=r;
+  if(Math.abs(A[p][i])<1e-10)throw Error("จุด Marker อยู่ในแนวที่คำนวณไม่ได้");
+  [A[i],A[p]]=[A[p],A[i]];
+  const d=A[i][i];for(let c=i;c<=n;c++)A[i][c]/=d;
+  for(let r=0;r<n;r++)if(r!==i){const f=A[r][i];for(let c=i;c<=n;c++)A[r][c]-=f*A[i][c];}
+ }
+ return A.map(r=>r[n]);
+}
+function fitHomography(pairs){
+ if(pairs.length<4)throw Error("ต้องมีจุดอ้างอิงอย่างน้อย 4 จุด");
+ const ata=Array.from({length:8},()=>Array(8).fill(0)),atb=Array(8).fill(0);
+ for(const p of pairs){
+  const {X,Y,u,v}=p;
+  const rows=[
+   {a:[X,Y,1,0,0,0,-u*X,-u*Y],b:u},
+   {a:[0,0,0,X,Y,1,-v*X,-v*Y],b:v}
+  ];
+  for(const {a,b} of rows)for(let i=0;i<8;i++){atb[i]+=a[i]*b;for(let j=0;j<8;j++)ata[i][j]+=a[i]*a[j];}
+ }
+ const h=solveLinear(ata,atb);return [...h,1];
+}
+function invert3(m){
+ const [a,b,c,d,e,f,g,h,i]=m;
+ const A=e*i-f*h,B=c*h-b*i,C=b*f-c*e,D=f*g-d*i,E=a*i-c*g,F=c*d-a*f,G=d*h-e*g,H=b*g-a*h,I=a*e-b*d;
+ const det=a*A+b*D+c*G;if(Math.abs(det)<1e-12)throw Error("Homography singular");
+ return [A,B,C,D,E,F,G,H,I].map(x=>x/det);
+}
+function project(H,x,y){
+ const z=H[6]*x+H[7]*y+H[8];return {x:(H[0]*x+H[1]*y+H[2])/z,y:(H[3]*x+H[4]*y+H[5])/z};
+}
+function buildCorrespondences(markers){
+ const pairs=[],half=config.markerSize/2,known=new Map(config.markers.map(m=>[m.id,m]));
+ for(const marker of markers){
+  const m=known.get(marker.id);if(!m)continue;
+  const local=[[-half,-half],[half,-half],[half,half],[-half,half]];
+  marker.corners.forEach((c,i)=>pairs.push({X:m.x+local[i][0],Y:m.y+local[i][1],u:c.x,v:c.y}));
+ }
+ return pairs;
+}
+function drawMarkerCorners(markers,scaleX,scaleY){
+ vctx.save();vctx.lineWidth=Math.max(2,view.width/500);vctx.strokeStyle="#ffb547";vctx.fillStyle="#14e5dc";
+ for(const marker of markers){
+  const pts=marker.corners.map(p=>({x:p.x*scaleX,y:p.y*scaleY}));
+  vctx.beginPath();pts.forEach((p,i)=>i?vctx.lineTo(p.x,p.y):vctx.moveTo(p.x,p.y));vctx.closePath();vctx.stroke();
+  pts.forEach(p=>{vctx.beginPath();vctx.arc(p.x,p.y,5,0,Math.PI*2);vctx.fill();});
+  vctx.fillStyle="#fff";vctx.font="18px sans-serif";vctx.fillText("ID "+marker.id,pts[0].x,pts[0].y-8);vctx.fillStyle="#14e5dc";
+ }
+ vctx.restore();
+}
+function wsConnect(){
+ const url=$("wsUrl").value.trim();if(!url)return;
+ if(socket){try{socket.close();}catch(e){}}
+ try{socket=new WebSocket(url);}catch(e){$("wsState").textContent="ERROR";return;}
+ $("wsState").textContent="CONNECTING";
+ socket.addEventListener("open",()=>{$("wsState").textContent="OPEN";});
+ socket.addEventListener("message",e=>{try{const d=JSON.parse(e.data);if(d.type==="welcome")$("wsState").textContent="PLAYER "+d.playerId;else if(d.type==="error")setStatus(d.message||"Server error","bad");}catch(_){}});
+ socket.addEventListener("close",()=>{$("wsState").textContent="CLOSED";});
+ socket.addEventListener("error",()=>{$("wsState").textContent="ERROR";});
+}
+function send(data){if(socket?.readyState===WebSocket.OPEN){socket.send(JSON.stringify(data));return true;}return false;}
+function sendXY(x,y){
+ const now=performance.now();if(now-lastSend<50)return;lastSend=now;
+ send({type:"xy",x:clamp(x,0,1),y:clamp(y,0,1)});
+}
+$("reconnectBtn").onclick=wsConnect;wsConnect();
+function frame(){
  if(!running)return;
- if(!cvOK()||!video.videoWidth){requestAnimationFrame(trackFrame);return;}
- fitCanvas();
- let gray=makeGray();
- if(prevGray&&prevPts&&prevPts.rows>=4){
-  const nextPts=new cv.Mat(),status=new cv.Mat(),err=new cv.Mat();
-  cv.calcOpticalFlowPyrLK(prevGray,gray,prevPts,nextPts,status,err,new cv.Size(21,21),3,
-    new cv.TermCriteria(cv.TERM_CRITERIA_EPS|cv.TERM_CRITERIA_COUNT,20,.03),0,1e-4);
-  const src=[],dst=[],kept=[],keptWorld=[];
-  for(let i=0;i<nextPts.rows;i++){
-   if(status.data[i]===1){const x=nextPts.data32F[i*2],y=nextPts.data32F[i*2+1];
-    if(Number.isFinite(x)&&Number.isFinite(y)){src.push(x,y);dst.push(pointMap[i*2],pointMap[i*2+1]);kept.push(x,y);keptWorld.push(pointMap[i*2],pointMap[i*2+1]);}
-   }
-  }
-  if(src.length>=8){
-   const srcMat=cv.matFromArray(src.length/2,1,cv.CV_32FC2,src),dstMat=cv.matFromArray(dst.length/2,1,cv.CV_32FC2,dst);
-   const mask=new cv.Mat();homography=cv.findHomography(srcMat,dstMat,cv.RANSAC,4,mask);
-   let inliers=0;for(let i=0;i<mask.rows;i++)if(mask.data[i])inliers++;
-   document.getElementById('points').textContent=inliers;
-   if(homography&&!homography.empty()){
-    const center=cv.matFromArray(1,1,cv.CV_32FC2,[video.videoWidth/2,video.videoHeight/2]),out=new cv.Mat();
-    cv.perspectiveTransform(center,out,homography);
-    const sx=out.data32F[0]/STAGE.w,sy=out.data32F[1]/STAGE.h;
-    // map stage to actual artwork inner area (x=110..1490, y=110..790)
-    const ax=(sx*STAGE.w-110)/1380,ay=(sy*STAGE.h-110)/680;
-    if(ax>=0&&ax<=1&&ay>=0&&ay<=1){
-     document.getElementById('x').textContent=ax.toFixed(3);document.getElementById('y').textContent=ay.toFixed(3);
-     setStatus(`TRACKING LIVE · ${inliers} จุด · พิกัดภายใน Artwork`,'good');
-     send({type:'pointer',x:ax,y:ay,tracking:true,points:inliers,timestamp:Date.now()});
-    } else {setStatus('จุดเล็งอยู่นอกพื้นที่กราฟิก','warn');send({type:'pointer',tracking:false,timestamp:Date.now()})}
-    center.delete();out.delete();
-   }
-   srcMat.delete();dstMat.delete();mask.delete();
-   prevPts.delete();prevPts=cv.matFromArray(kept.length/2,1,cv.CV_32FC2,kept);pointMap=keptWorld;
-  }else{
-   setStatus('Optical Flow หลุด · กำลังค้นหา Marker ใหม่','warn');
-   prevPts.delete();prevPts=null;send({type:'pointer',tracking:false,timestamp:Date.now()});
-  }
-  nextPts.delete();status.delete();err.delete();
- }
- if(prevGray)prevGray.delete();prevGray=gray;
- const now=performance.now();
- if(now-lastScan>450){lastScan=now;const n=detectAndMerge();if(n)setStatus(`พบ Marker ${n} จุด · อัปเดตจุดอ้างอิงแล้ว`,'good')}
- frames++;if(now-fpsAt>1000){document.getElementById('fps').textContent=frames;frames=0;fpsAt=now}
- // draw diagnostics overlay
- ctx.clearRect(0,0,overlay.width,overlay.height);
- if(prevPts){ctx.fillStyle='#60f5cf';for(let i=0;i<prevPts.rows;i++){const x=prevPts.data32F[i*2],y=prevPts.data32F[i*2+1];ctx.beginPath();ctx.arc(x,y,3,0,Math.PI*2);ctx.fill()}}
- requestAnimationFrame(trackFrame);
-}
-function send(obj){if(ws&&ws.readyState===1)ws.send(JSON.stringify(obj))}
-document.getElementById('start').onclick=async()=>{
+ if(video.readyState<2){raf=requestAnimationFrame(frame);return;}
+ const vw=video.videoWidth,vh=video.videoHeight;
+ if(view.width!==vw||view.height!==vh){view.width=vw;view.height=vh;}
+ vctx.drawImage(video,0,0,vw,vh);
+ const maxW=640,scale=Math.min(1,maxW/vw),ww=Math.round(vw*scale),wh=Math.round(vh*scale);
+ work.width=ww;work.height=wh;wctx.drawImage(video,0,0,ww,wh);
  try{
-  if(!cvOK()){setStatus('กำลังโหลด OpenCV.js หรือโหลดไม่สำเร็จ รอสักครู่แล้วลองใหม่','warn');return}
-  stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}},audio:false});
-  video.srcObject=stream;await video.play();running=true;document.getElementById('start').disabled=true;document.getElementById('stop').disabled=false;
-  if(prevGray)prevGray.delete();if(prevPts)prevPts.delete();prevGray=null;prevPts=null;pointMap=[];
-  detectAndMerge();if(!prevPts)setStatus('ยังไม่พบ Marker · เล็งไปที่ขอบจอที่มี QR อย่างน้อยหนึ่งอัน','warn');
-  const url=document.getElementById('wsurl').value.trim();if(url){try{ws=new WebSocket(url);ws.onopen=()=>document.getElementById('wsstatus').textContent='WebSocket: เชื่อมต่อแล้ว';ws.onclose=()=>document.getElementById('wsstatus').textContent='WebSocket: ปิดการเชื่อมต่อ';ws.onerror=()=>document.getElementById('wsstatus').textContent='WebSocket: เกิดข้อผิดพลาด'}catch(e){}}
-  requestAnimationFrame(trackFrame);
- }catch(e){setStatus('เปิดกล้องไม่สำเร็จ: '+e.message,'bad')}
-};
-document.getElementById('stop').onclick=()=>{running=false;if(stream)stream.getTracks().forEach(t=>t.stop());video.srcObject=null;document.getElementById('start').disabled=false;document.getElementById('stop').disabled=true;if(prevGray)prevGray.delete();if(prevPts)prevPts.delete();prevGray=null;prevPts=null;setStatus('หยุด Tracking แล้ว')};
-document.getElementById('calib').onclick=()=>{if(cvOK()&&video.videoWidth){const n=detectAndMerge();setStatus(n?`อัปเดต Marker ${n} จุดแล้ว`:'ยังไม่พบ Marker ที่รู้จัก',n?'good':'warn')}};
+  const image=wctx.getImageData(0,0,ww,wh);
+  const detected=detector.detect(image);
+  const valid=detected.filter(m=>config.markers.some(k=>k.id===m.id));
+  $("markerCount").textContent=valid.length;
+  $("ids").textContent=valid.length?valid.map(m=>m.id).join(", "):"—";
+  if(valid.length){
+   const pairs=buildCorrespondences(valid);
+   const H=fitHomography(pairs),inv=invert3(H);
+   const p=project(inv,ww/2,wh/2);
+   const x=p.x/config.screenW,y=p.y/config.screenH;
+   if(Number.isFinite(x)&&Number.isFinite(y)){
+    const inside=x>=0&&x<=1&&y>=0&&y<=1;
+    lastGood={x:clamp(x,0,1),y:clamp(y,0,1)};
+    updateXY(lastGood.x,lastGood.y,true);sendXY(lastGood.x,lastGood.y);
+    setStatus(`พบ Marker ${valid.length} ตัว (ID ${valid.map(m=>m.id).join(", ")}) · ${inside?"จุดเล็งอยู่ในพื้นที่จอ":"จุดเล็งเลยขอบพื้นที่จอ"}`,inside?"good":"warn");
+   }else throw Error("คำนวณพิกัดไม่สำเร็จ");
+   drawMarkerCorners(valid,vw/ww,vh/wh);
+  }else{
+   updateXY(lastGood?.x??0,lastGood?.y??0,false);
+   setStatus("ไม่พบ Marker ที่ลงทะเบียน — หยุดส่ง XY ชั่วคราว","bad");
+  }
+ }catch(err){
+  updateXY(lastGood?.x??0,lastGood?.y??0,false);
+  setStatus(err.message||"Tracking error","bad");
+ }
+ raf=requestAnimationFrame(frame);
+}
+async function toggleCamera(){
+ if(running){
+  running=false;cancelAnimationFrame(raf);if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;video.srcObject=null;send({type:"active",active:false});$("cameraBtn").textContent="เปิดกล้อง";setStatus("กล้องหยุดแล้ว");return;
+ }
+ try{
+  if(!navigator.mediaDevices?.getUserMedia)throw Error("ต้องเปิดผ่าน HTTPS และเบราว์เซอร์ที่รองรับกล้อง");
+  stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:"environment"},width:{ideal:1280},height:{ideal:720}}});
+  video.srcObject=stream;await video.play();running=true;send({type:"active",active:true});$("cameraBtn").textContent="ปิดกล้อง";setStatus("กล้องพร้อม — กำลังหา Marker บน Bezel");
+  raf=requestAnimationFrame(frame);
+ }catch(e){setStatus("เปิดกล้องไม่สำเร็จ: "+e.message,"bad");}
+}
+$("cameraBtn").onclick=toggleCamera;
+window.addEventListener("pagehide",()=>{send({type:"active",active:false});if(stream)stream.getTracks().forEach(t=>t.stop());if(socket)socket.close();});
+function init(){
+ if(window.AR?.Detector&&window.AR?.Dictionary){
+  detector=new AR.Detector({dictionaryName:"ARUCO"});
+  $("libState").textContent="Marker Engine READY";$("cameraBtn").disabled=false;$("cameraBtn").textContent="เปิดกล้อง";
+  generateMarkers();setStatus("พร้อมใช้งาน — ตั้งตำแหน่ง Marker ให้ตรงกับ TV ก่อนเปิดกล้อง","good");
+ }else{$("libState").textContent="โหลด Marker Engine ไม่สำเร็จ";setStatus("โหลด js-aruco2 ไม่สำเร็จ ตรวจอินเทอร์เน็ตแล้วรีเฟรช","bad");}
+}
+renderMarkerInputs();window.addEventListener("load",init);if(document.readyState==="complete")init();
+})();
 </script>
-</body></html>
+</body>
+</html>
